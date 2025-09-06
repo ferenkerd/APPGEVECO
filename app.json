@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "app",
+    "name": "APPGEVECO",
     "slug": "app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,10 +20,14 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "jsEngine": "jsc"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }

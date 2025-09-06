@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "your-appname",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -9,10 +9,24 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~5.0.4",
+    "@gluestack-ui/config": "^1.1.20",
+    "@gluestack-ui/themed": "^1.1.73",
+    "@react-native-aria/focus": "^0.2.9",
+    "@react-native-aria/interactions": "^0.2.16",
+    "@react-native-aria/overlays": "^0.3.15",
+    "@react-navigation/bottom-tabs": "^7.4.7",
+    "@react-navigation/native": "^7.1.17",
+    "@react-navigation/stack": "^7.4.8",
     "expo": "~53.0.22",
+    "expo-navigation-bar": "~4.2.8",
+    "expo-secure-store": "~14.2.4",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
-    "react-native": "0.79.6"
+    "react-dom": "19.0.0",
+    "react-native": "0.79.6",
+    "react-native-toast-message": "^2.3.3",
+    "react-native-web": "^0.20.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

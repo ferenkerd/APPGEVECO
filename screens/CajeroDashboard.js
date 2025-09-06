@@ -1,0 +1,109 @@
+import React, { useContext } from 'react';
+import { SafeAreaView, Platform } from 'react-native';
+import { Box, Text, VStack, HStack } from '@gluestack-ui/themed';
+import { CustomButton } from '../components/CustomButton';
+import { useAuth } from '../context/AuthContext';
+import { ColorModeContext } from '../context/ColorModeContext';
+import { getPalette } from '../styles/theme';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { MaterialIcons } from '@expo/vector-icons';
+import { TouchableOpacity, View } from 'react-native';
+import CustomTabBar from '../components/CustomTabBar';
+import AppHeader from '../components/AppHeader';
+import TabHeader from '../components/TabHeader';
+// import StartSaleScreen from './StartSaleScreen';
+
+// Pantallas básicas para cada pestaña
+function HistorialVentasScreen() {
+  return (
+    <Box flex={1} bg="transparent">
+      {/* <AppHeader />  <-- Elimina este header aquí */}
+      <Box flex={1} alignItems="center" justifyContent="center">
+        <Text fontSize={22} fontWeight="bold">Historial de Ventas</Text>
+      </Box>
+    </Box>
+  );
+}
+
+function IniciarCompraScreen({ navigation }) {
+  React.useEffect(() => {
+    navigation.replace('IdentificarCliente');
+  }, [navigation]);
+  return null;
+}
+
+function OtrosProductosScreen() {
+  return (
+    <Box flex={1} bg="transparent">
+      {/* <AppHeader />  <-- Elimina este header aquí */}
+      <Box flex={1} alignItems="center" justifyContent="center">
+        <Text fontSize={22} fontWeight="bold">Otros Productos</Text>
+      </Box>
+    </Box>
+  );
+}
+
+// Dashboard como pantalla/tab
+function DashboardScreen({ navigation }) {
+  const { user, logout } = useAuth();
+  const { colorMode } = useContext(ColorModeContext);
+  const palette = getPalette(colorMode);
+
+  return (
+    <>
+
+      <AppHeader />
+      <Box flex={1} bg="transparent" borderWidth={0} />
+    </>
+  );
+}
+
+const Tab = createBottomTabNavigator();
+// CustomTabBar ha sido extraído a un archivo aparte para mejor organización y reutilización.
+
+export default function CajeroDashboardTabs() {
+  const { colorMode } = useContext(ColorModeContext);
+  const palette = getPalette(colorMode);
+
+  return (
+    <Tab.Navigator
+      initialRouteName="Dashboard"
+      tabBar={props => <CustomTabBar {...props} />}
+      screenOptions={{
+        headerStyle: { backgroundColor: palette.background },
+        headerTitleStyle: { color: palette.text },
+        headerTintColor: palette.primary,
+        tabBarShowLabel: false,
+        headerTitleAlign: 'center',
+        headerShown: false,
+      }}
+    >
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{ tabBarLabel: 'Inicio', title: 'Inicio' }}
+      />
+      <Tab.Screen
+        name="IniciarCompra"
+        component={IniciarCompraScreen}
+        options={{
+          tabBarLabel: 'Iniciar Compra',
+          title: 'Iniciar Compra',
+          headerShown: true,
+          header: () => <TabHeader title="Iniciar Compra" />,
+        }}
+      />
+      <Tab.Screen
+        name="HistorialVentas"
+        component={HistorialVentasScreen}
+        options={{
+          tabBarLabel: 'Historial de Ventas',
+          title: 'Historial de Ventas',
+          headerShown: true,
+          header: () => <TabHeader title="Historial de Ventas" />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
