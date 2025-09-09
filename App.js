@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, { useState, useContext } from 'react';
 import { GluestackUIProvider } from '@gluestack-ui/themed';
 import Toast from 'react-native-toast-message';
@@ -23,12 +24,12 @@ import { ActivityIndicator, View, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
 
+// import BarcodeScannerScreen from './screens/BarcodeScannerScreen';
+import CameraBarcodeScreen from './screens/CameraBarcodeScreen';
 const Stack = createStackNavigator();
-
 
 import { getPalette } from './styles/theme';
 import { ColorModeContext } from './context/ColorModeContext';
-
 
 function AppNavigator() {
   const { user, loading } = useAuth();
@@ -52,12 +53,14 @@ function AppNavigator() {
         headerTitleStyle: { color: palette.text },
       }}
     >
-      <Stack.Screen name="Start" component={StartScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+  <Stack.Screen name="Start" component={StartScreen} options={{ headerShown: false }} />
+  <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
   <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="CajeroDashboard" component={CajeroDashboard} options={{ headerShown: false }} />
+  <Stack.Screen name="CajeroDashboard" component={CajeroDashboard} options={{ headerShown: false }} />
   {/* <Stack.Screen name="StartSale" component={StartSaleScreen} options={{ headerShown: false }} /> */}
   <Stack.Screen name="IdentificarCliente" component={IdentificarClienteScreen} options={{ title: 'Identificar Cliente', headerShown: true }} />
+  {/* <Stack.Screen name="BarcodeScanner" component={BarcodeScannerScreen} options={{ title: 'Escáner de Código', headerShown: true }} /> */}
+  <Stack.Screen name="CameraBarcode" component={CameraBarcodeScreen} options={{ title: 'Escáner de Código (Cámara)', headerShown: true }} />
   <Stack.Screen name="AgregarProductos" component={AgregarProductosScreen} options={{ title: 'Agregar Productos', headerShown: true }} />
   <Stack.Screen name="ProcesarPago" component={ProcesarPagoScreen} options={{ title: 'Procesar Pago', headerShown: true }} />
   <Stack.Screen name="ResumenVenta" component={ResumenVentaScreen} options={{ title: 'Resumen de Venta', headerShown: true }} />

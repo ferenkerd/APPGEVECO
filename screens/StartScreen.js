@@ -71,6 +71,14 @@ const StartScreen = ({ navigation }) => {
           >
             Iniciar compra
           </CustomButton>
+          <CustomButton
+            style={{ width: '100%' }}
+            backgroundColor={colorMode === 'dark' ? '#4caf50' : '#388e3c'}
+            textColor={'#fff'}
+            onPress={() => navigation.navigate('CameraBarcode')}
+          >
+            Probar escáner de código de barras
+          </CustomButton>
         </VStack>
       </Box>
 

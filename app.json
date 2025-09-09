@@ -21,12 +21,27 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "jsEngine": "jsc"
+      "jsEngine": "hermes",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.anonymous.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permite que la app acceda a tu cámara",
+          "microphonePermission": "Permite que la app acceda a tu micrófono",
+          "recordAudioAndroid": true
+        }
+      ],
       "expo-secure-store"
     ]
   }
