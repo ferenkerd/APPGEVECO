@@ -5,12 +5,17 @@ import Toast from 'react-native-toast-message';
 import { CustomToast } from './components/CustomToast';
 import { gluestackTheme } from './gluestack-theme';
 import { NavigationContainer } from '@react-navigation/native';
+import { createNavigationContainerRef } from '@react-navigation/native';
+// Referencia global para navegación fuera de componentes
+export const navigationRef = createNavigationContainerRef();
+if (!global.navigationRef) global.navigationRef = navigationRef;
 import { createStackNavigator } from '@react-navigation/stack';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import CajeroDashboard from './screens/CajeroDashboard';
 import AlmacenistaDashboard from './screens/AlmacenistaDashboard';
+import RegistrarProductoScreen from './screens/RegistrarProductoScreen';
 import AdministradorDashboard from './screens/AdministradorDashboard';
 import StartScreen from './screens/StartScreen';
 // import StartSaleScreen from './screens/StartSaleScreen';
@@ -65,7 +70,8 @@ function AppNavigator() {
   <Stack.Screen name="ProcesarPago" component={ProcesarPagoScreen} options={{ title: 'Procesar Pago', headerShown: true }} />
   <Stack.Screen name="ResumenVenta" component={ResumenVentaScreen} options={{ title: 'Resumen de Venta', headerShown: true }} />
   <Stack.Screen name="RegisterClient" component={RegisterClientScreen} options={{ title: 'Registrar Cliente', headerShown: true }} />
-      <Stack.Screen name="AlmacenistaDashboard" component={AlmacenistaDashboard} options={{ headerShown: false }} />
+  <Stack.Screen name="AlmacenistaDashboard" component={AlmacenistaDashboard} options={{ headerShown: false }} />
+  <Stack.Screen name="RegistrarProducto" component={RegistrarProductoScreen} options={{ title: 'Registrar Producto', headerShown: true }} />
       <Stack.Screen name="AdministradorDashboard" component={AdministradorDashboard} options={{ headerShown: false }} />
   <Stack.Screen name="ToastTest" component={ToastTestScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
@@ -95,7 +101,7 @@ export default function App() {
               <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} translucent />
               {/* View para cubrir el área bajo el StatusBar en edge-to-edge */}
               <View style={{ height: 32, backgroundColor: palette.background, width: '100%' }} />
-              <NavigationContainer>
+              <NavigationContainer ref={navigationRef}>
                 <AppNavigator />
               </NavigationContainer>
             </SafeAreaView>

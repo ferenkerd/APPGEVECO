@@ -14,7 +14,7 @@ export default function ResumenVentaScreen({ navigation, route }) {
         <Text fontSize={22} fontWeight="bold" color={palette.text} mb={2} textAlign="center">
           Venta Finalizada
         </Text>
-        <Text color={palette.text} mb={2}>Cliente: {client?.name} ({client?.id})</Text>
+        <Text color={palette.text} mb={2}>Cliente: {client?.first_name} {client?.last_name} {client?.lastname} ({client?.id})</Text>
         <Text color={palette.text} mb={2}>Total: {currency === 'VES' ? `Bs. ${(total * 36).toFixed(2)}` : currency === 'USD' ? `$${total.toFixed(2)}` : `COL$ ${(total * 4000).toFixed(2)}`}</Text>
         <Text color={palette.text} mb={2}>Método de pago: {paymentType}</Text>
         {paymentType === 'cash' && <Text color={palette.text}>Recibido: {cashReceived}</Text>}

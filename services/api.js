@@ -39,6 +39,22 @@ export async function apiFetch(endpoint, options = {}, token = null) {
 
   devLog('apiFetch: status', response.status);
 
+  if (response.status === 401 || response.status === 403) {
+    // Token inválido o expirado: forzar logout y redirección global
+    if (global.navigationRef && global.navigationRef.current) {
+      global.navigationRef.current.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }
+    // Limpiar storage si existe
+    if (global.Storage) {
+      global.Storage.deleteItem && global.Storage.deleteItem('access');
+      global.Storage.deleteItem && global.Storage.deleteItem('refresh');
+    }
+    throw new Error('Sesión expirada o no autorizada');
+  }
+
   if (!response.ok) {
     // Manejo de errores global
     const errorText = await response.text();

@@ -1,6 +1,6 @@
 // ...existing code...
 import { devLog } from '../utils/logger';
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { Storage } from '../services/storage';
 import { apiFetch, logoutApi } from '../services/api';
 
@@ -43,49 +43,90 @@ export const AuthProvider = ({ children }) => {
       return data.access;
     } catch {
       await logout();
+      // Redirigir al login si el refresh falla
+      redirectToLogin();
       return null;
     }
   };
 
+  const pingInterval = useRef();
+  // Redirige al login usando navigation root
+  const redirectToLogin = () => {
+    // Usar NavigationContainerRef para navegar fuera de componentes
+    if (global.navigationRef && global.navigationRef.current) {
+      global.navigationRef.current.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }
+  };
+
   useEffect(() => {
-    devLog('AuthContext useEffect (mount)');
     // Check for tokens on mount
     const loadTokens = async () => {
-      devLog('loadTokens called');
       try {
-        // Asegura que SecureStore está bien importado y usa getItemAsync
-  const access = await Storage.getItem('access');
-  const refresh = await Storage.getItem('refresh');
-  devLog('AuthContext: access', access);
-  devLog('AuthContext: refresh', refresh);
+        const access = await Storage.getItem('access');
+        const refresh = await Storage.getItem('refresh');
         if (access && refresh) {
-          // Verifica expiración del access token
           const payload = parseJwt(access);
           const now = Math.floor(Date.now() / 1000);
-          devLog('AuthContext: payload', payload);
           if (payload && payload.exp && payload.exp < now) {
-            // Token expirado, intenta refrescar
             const newAccess = await refreshAccessToken(refresh);
             if (newAccess) {
               setUser({ access: newAccess, refresh });
             } else {
               setUser(null);
+              redirectToLogin();
             }
           } else {
             setUser({ access, refresh });
           }
         }
       } catch (e) {
-  devLog('AuthContext error:', e);
+  // Silenciar logs
       } finally {
         setLoading(false);
       }
     };
     loadTokens();
+    return () => {
+      if (pingInterval.current) clearInterval(pingInterval.current);
+    };
   }, []);
 
+  // Intervalo para mantener la sesión activa (solo uno activo)
+  useEffect(() => {
+    if (pingInterval.current) clearInterval(pingInterval.current);
+    if (user && user.access && user.refresh) {
+      pingInterval.current = setInterval(async () => {
+        try {
+          // Verificar si el token de acceso está expirado
+          const payload = parseJwt(user.access);
+          const now = Math.floor(Date.now() / 1000);
+          let accessToken = user.access;
+          if (payload && payload.exp && payload.exp < now) {
+            // Si expiró, refrescar
+            const newAccess = await refreshAccessToken(user.refresh);
+            if (newAccess) {
+              accessToken = newAccess;
+            } else {
+              // Si no se pudo refrescar, salir
+              return;
+            }
+          }
+          await apiFetch('auth/ping/', { method: 'GET' }, accessToken);
+        } catch (e) {
+          // Silenciar logs
+        }
+      }, 240000); // 4 minutos
+    }
+    return () => {
+      if (pingInterval.current) clearInterval(pingInterval.current);
+    };
+  }, [user]);
+
   const login = async (username, password) => {
-    devLog('login called', username);
+  devLog('login called', username);
     try {
       // No se pasa token en login
       const data = await apiFetch('/auth/login/', {
@@ -109,7 +150,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    devLog('logout called');
+  devLog('logout called');
     try {
       const access = await Storage.getItem('access');
       const refresh = await Storage.getItem('refresh');
@@ -126,8 +167,11 @@ export const AuthProvider = ({ children }) => {
 
   // Hook para obtener el access token válido automáticamente
   const getValidAccessToken = async () => {
-    devLog('getValidAccessToken called');
-    if (!user) return null;
+  devLog('getValidAccessToken called');
+    if (!user) {
+      redirectToLogin();
+      return null;
+    }
     const payload = parseJwt(user.access);
     const now = Math.floor(Date.now() / 1000);
     if (payload && payload.exp && payload.exp < now) {

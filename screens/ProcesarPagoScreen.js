@@ -13,7 +13,7 @@ export default function ProcesarPagoScreen({ navigation, route }) {
   const [transferRef, setTransferRef] = useState('');
   const [currency, setCurrency] = useState('VES');
 
-  const subtotal = products.reduce((sum, p) => sum + p.price * p.qty, 0);
+  const subtotal = products.reduce((sum, p) => sum + (parseFloat(p.sale_price) || 0) * p.qty, 0);
   const total = subtotal;
   const vuelto = paymentType === 'cash' && cashReceived ? Math.max(0, parseFloat(cashReceived) - total) : 0;
 
@@ -86,7 +86,7 @@ export default function ProcesarPagoScreen({ navigation, route }) {
               <SelectItem label="Pesos (COP)" value="COP" />
             </Select>
             <Text color={palette.text} mt={1}>
-              Total: {currency === 'VES' ? `Bs. ${(total * 36).toFixed(2)}` : currency === 'USD' ? `$${total.toFixed(2)}` : `COL$ ${(total * 4000).toFixed(2)}`}
+              Total: {currency === 'VES' ? `Bs. ${(total * 157).toFixed(2)}` : currency === 'USD' ? `$${total.toFixed(2)}` : `COL$ ${(total * 4000).toFixed(2)}`}
             </Text>
           </VStack>
         </VStack>

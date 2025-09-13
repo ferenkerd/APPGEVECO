@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { TouchableOpacity, Image, Modal, View, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Box, HStack, Text } from '@gluestack-ui/themed';
+import { Box, Text } from '@gluestack-ui/themed';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { ColorModeContext } from '../context/ColorModeContext';
 import { useAuth } from '../context/AuthContext';
@@ -31,9 +31,9 @@ export default function AppHeader() {
         paddingHorizontal: 16,
       }}
     >
-      <HStack alignItems="center" justifyContent="space-between" width="100%" style={{ height: '100%' }}>
+      <Box flexDirection="row" alignItems="center" justifyContent="space-between" width="100%" style={{ height: '100%' }}>
         {/* Logo y nombre de la app a la izquierda */}
-        <HStack alignItems="center" space="md">
+        <Box flexDirection="row" alignItems="center">
           <Image
             source={require('../assets/logo.png')}
             style={{ width: 40, height: 40, resizeMode: 'contain' }}
@@ -41,7 +41,7 @@ export default function AppHeader() {
           <Text fontSize={20} fontWeight="bold" color={palette.text}>
             APPGEVECO
           </Text>
-        </HStack>
+  </Box>
         {/* Botón de menú a la derecha, abre un modal */}
         <>
           <TouchableOpacity
@@ -91,7 +91,7 @@ export default function AppHeader() {
             </Pressable>
           </Modal>
         </>
-      </HStack>
+  </Box>
     </Box>
   );
 }

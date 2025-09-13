@@ -1,27 +1,26 @@
 import React, { useState, useContext, useCallback, useRef } from 'react';
 import { Box, VStack, HStack, Text, Button, FlatList } from '@gluestack-ui/themed';
 import { FormInput } from '../components/FormInput';
+import { useAuth } from '../context/AuthContext';
 import { ColorModeContext } from '../context/ColorModeContext';
 import { getPalette } from '../styles/theme';
 import BarcodeScannerButton from '../components/BarcodeScannerButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import CategoryList from '../components/CategoryList';
 import { Modal, Animated, Dimensions, TouchableWithoutFeedback, PanResponder } from 'react-native';
+import { apiFetch } from '../services/api';
 
+// AgregarProductosScreen debe ser un componente funcional
 export default function AgregarProductosScreen({ navigation, route }) {
   const { client } = route.params;
+  const { user } = useAuth();
   const { colorMode } = useContext(ColorModeContext);
   const palette = getPalette(colorMode);
   const [productQuery, setProductQuery] = useState('');
   const [products, setProducts] = useState([]); // [{id, name, price, qty}]
   const [productError, setProductError] = useState('');
-  const [categories] = useState([
-    { id: 'all', name: 'Todos' },
-    { id: 'bebidas', name: 'Bebidas' },
-    { id: 'snacks', name: 'Snacks' },
-    { id: 'limpieza', name: 'Limpieza' },
-  ]);
-  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -72,63 +71,56 @@ export default function AgregarProductosScreen({ navigation, route }) {
     })
   ).current;
 
-  // Simulación de búsqueda manual (puedes conectar a tu API real)
-  const MOCK_PRODUCTS = [
-    { id: '1', name: 'Producto A', price: 10, weight: '1kg' },
-    { id: '2', name: 'Producto B', price: 20, weight: '500g' },
-    { id: '3', name: 'Producto C', price: 15, weight: '2kg' },
-  ];
+  // Estado para productos reales
+  const [allProducts, setAllProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
 
-  // Nuevo: Estado para productos filtrados
-  const [filteredProducts, setFilteredProducts] = useState(MOCK_PRODUCTS);
+  // Obtener productos reales del backend
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await apiFetch('/products/', { method: 'GET' }, user?.access);
+        setAllProducts(response);
+        setFilteredProducts(response);
+      } catch (e) {
+        setAllProducts([]);
+        setFilteredProducts([]);
+      }
+    };
+    fetchProducts();
+  }, [user]);
 
   // Filtrar productos en tiempo real
   React.useEffect(() => {
     if (!productQuery) {
-      setFilteredProducts(MOCK_PRODUCTS);
+      setFilteredProducts(allProducts);
     } else {
       setFilteredProducts(
-        MOCK_PRODUCTS.filter(p =>
-          p.name.toLowerCase().includes(productQuery.toLowerCase()) ||
-          p.id === productQuery ||
-          p.price.toString() === productQuery ||
-          p.weight === productQuery
-        )
+        allProducts.filter(p => {
+          const query = productQuery.toLowerCase();
+          const barcode = (p.barcode || p.code || '').toLowerCase();
+          const name = (p.name || '').toLowerCase();
+          const id = p.id ? p.id.toString() : '';
+          const salePrice = p.sale_price ? p.sale_price.toString() : '';
+          return (
+            barcode.includes(query) ||
+            name.includes(query) ||
+            id.includes(query) ||
+            salePrice.includes(query)
+          );
+        })
       );
     }
-  }, [productQuery]);
+  }, [productQuery, allProducts]);
 
-  const handleManualSearch = () => {
-    const found = MOCK_PRODUCTS.find(p =>
-      p.name.toLowerCase().includes(productQuery.toLowerCase()) ||
-      p.price.toString() === productQuery ||
-      p.weight === productQuery
-    );
-    if (found) {
-      const existing = products.find(p => p.id === found.id);
-      if (existing) {
-        setProducts(products.map(p => p.id === found.id ? { ...p, qty: p.qty + 1 } : p));
-      } else {
-        setProducts([...products, { ...found, qty: 1 }]);
-      }
-      setProductError('');
-    } else {
-      setProductError('Producto no encontrado.');
-    }
-  };
-
-  const handleScanBarcode = useCallback(() => {
-    navigation.navigate('CameraBarcode', {
-      onScanned: (data) => setProductQuery(data),
-    });
-  }, [navigation]);
+  // Eliminar handleManualSearch (ya no se usa MOCK_PRODUCTS)
 
   // Nuevo: Agregar producto automáticamente al escanear
   const handleBarCodeScanned = (data) => {
     setProductQuery(data);
     setShowScanner(false);
     // Buscar producto por código escaneado y agregarlo automáticamente
-    const found = MOCK_PRODUCTS.find(p => p.id === data);
+    const found = allProducts.find(p => p.id === data);
     if (found) {
       const existing = products.find(p => p.id === found.id);
       if (existing) {
@@ -142,7 +134,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
     }
   };
 
-  const subtotal = products.reduce((sum, p) => sum + p.price * p.qty, 0);
+  const subtotal = products.reduce((sum, p) => sum + p.sale_price * p.qty, 0);
 
   return (
     <Box flex={1} bg={palette.surface} padding={16}>
@@ -254,6 +246,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
                 visible={showScanner}
                 onScanned={handleBarCodeScanned}
                 onClose={() => setShowScanner(false)}
+                allProducts={allProducts}
               />
               <Text fontSize={18} fontWeight="bold" color={palette.text} mt={2} mb={1}>Productos disponibles</Text>
               <FlatList
@@ -261,8 +254,13 @@ export default function AgregarProductosScreen({ navigation, route }) {
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => (
                   <HStack justifyContent="space-between" alignItems="center" bg={palette.input} p={2} borderRadius={6} mb={2}>
-                    <Text color={palette.text}>{item.name}</Text>
-                    <Text color={palette.text}>${item.price}</Text>
+                    <VStack alignItems="flex-start" flex={1}>
+                      <Text color={palette.text} fontWeight="bold">{item.name}</Text>
+                      <Text color={palette.text} fontSize={12}>Código: {item.id}</Text>
+                      <Text color={palette.text} fontSize={12}>Código de barras: {item.code || 'N/A'}</Text>
+                      <Text color={palette.text} fontSize={12}>Precio: ${item.sale_price}</Text>
+                      <Text color={palette.text} fontSize={12}>Precio venta: ${item.sale_price}</Text>
+                    </VStack>
                     <Button
                       size="sm"
                       bg={palette.primary}
@@ -294,7 +292,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
             <HStack justifyContent="space-between" alignItems="center" bg={palette.input} p={2} borderRadius={6} mb={2}>
               <Text color={palette.text}>{item.name}</Text>
               <Text color={palette.text}>x{item.qty}</Text>
-              <Text color={palette.text}>${item.price * item.qty}</Text>
+              <Text color={palette.text}>${item.sale_price * item.qty}</Text>
             </HStack>
           )}
           ListEmptyComponent={<Text color={palette.text} textAlign="center" mt={4}>No hay productos agregados.</Text>}
@@ -312,4 +310,5 @@ export default function AgregarProductosScreen({ navigation, route }) {
       </VStack>
     </Box>
   );
+// ...existing code...
 }

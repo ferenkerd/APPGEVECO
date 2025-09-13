@@ -2,21 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, Button, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
-export default function BarcodeScannerModal({ visible, onScanned, onClose }) {
+// Recibe allProducts para buscar el nombre del producto escaneado
+export default function BarcodeScannerModal({ visible, onScanned, onClose, allProducts = [] }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [barcode, setBarcode] = useState('');
+  const [foundProduct, setFoundProduct] = useState(null);
 
   const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true);
     setBarcode(data);
-    onScanned && onScanned(data);
+    // Buscar producto por code o barcode
+    const product = allProducts.find(p => (p.code || p.barcode) === data);
+    setFoundProduct(product || null);
   };
 
   useEffect(() => {
     if (visible) {
       setScanned(false);
       setBarcode('');
+      setFoundProduct(null);
     }
   }, [visible]);
 
@@ -40,18 +45,30 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose }) {
             </View>
           ) : (
             <>
-              <CameraView
-                style={styles.camera}
-                facing="back"
-                barcodeScannerSettings={{
-                  barcodeTypes: [
-                    'qr', 'ean13', 'ean8', 'code128', 'code39', 'code93', 'upc_a', 'upc_e', 'pdf417', 'aztec', 'datamatrix',
-                  ],
-                }}
-                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-              />
+              <View style={styles.cameraContainer}>
+                <CameraView
+                  style={styles.camera}
+                  facing="back"
+                  barcodeScannerSettings={{
+                    barcodeTypes: [
+                      'qr', 'ean13', 'ean8', 'code128', 'code39', 'code93', 'upc_a', 'upc_e', 'pdf417', 'aztec', 'datamatrix',
+                    ],
+                  }}
+                  onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+                />
+              </View>
               <Text style={styles.codeText}>{barcode}</Text>
-              <Button title={scanned ? 'Escanear de nuevo' : 'Cerrar'} onPress={scanned ? () => { setScanned(false); setBarcode(''); } : onClose} />
+              {scanned && foundProduct && (
+                <View style={{ alignItems: 'center', marginBottom: 12 }}>
+                  <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8 }}>Producto encontrado:</Text>
+                  <Text style={{ fontSize: 16 }}>{foundProduct.name}</Text>
+                  <Button title="Añadir" onPress={() => { onScanned && onScanned(barcode); }} />
+                </View>
+              )}
+              {scanned && !foundProduct && (
+                <Text style={{ color: 'red', marginBottom: 12 }}>Producto no encontrado</Text>
+              )}
+              <Button title={scanned ? 'Escanear de nuevo' : 'Cerrar'} onPress={scanned ? () => { setScanned(false); setBarcode(''); setFoundProduct(null); } : onClose} />
             </>
           )}
         </View>
@@ -69,16 +86,24 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '90%',
-    height: 400,
+    flex: 1,
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  cameraContainer: {
+    width: '100%',
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginTop: 16,
+    marginBottom: 16,
+  },
   camera: {
     width: '100%',
-    height: 250,
+    flex: 1,
   },
   codeText: {
     marginVertical: 16,

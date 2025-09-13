@@ -1,6 +1,6 @@
 
 import React, { useContext, useState } from 'react';
-import { Box, HStack, Text } from '@gluestack-ui/themed';
+import { Box, Text } from '@gluestack-ui/themed';
 import { TouchableOpacity, Modal, View, Pressable } from 'react-native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -29,8 +29,8 @@ export default function TabHeader({ title }) {
         alignItems: 'center',
       }}
     >
-      <HStack alignItems="center" justifyContent="space-between" width="100%" style={{ height: '100%' }}>
-        <HStack alignItems="center">
+      <Box flexDirection="row" alignItems="center" justifyContent="space-between" width="100%" style={{ height: '100%' }}>
+        <Box flexDirection="row" alignItems="center">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={{ padding: 8, marginRight: 8 }}
@@ -41,7 +41,7 @@ export default function TabHeader({ title }) {
           <Text fontSize={20} fontWeight="bold" color={palette.text}>
             {title}
           </Text>
-        </HStack>
+  </Box>
         {/* Botón de menú a la derecha, igual que en AppHeader */}
         <>
           <TouchableOpacity
@@ -105,7 +105,7 @@ export default function TabHeader({ title }) {
             </Pressable>
           </Modal>
         </>
-      </HStack>
+  </Box>
     </Box>
   );
 }
