@@ -66,7 +66,7 @@ function AppNavigator() {
   <Stack.Screen name="IdentificarCliente" component={IdentificarClienteScreen} options={{ title: 'Identificar Cliente', headerShown: true }} />
   {/* <Stack.Screen name="BarcodeScanner" component={BarcodeScannerScreen} options={{ title: 'Escáner de Código', headerShown: true }} /> */}
   <Stack.Screen name="CameraBarcode" component={CameraBarcodeScreen} options={{ title: 'Escáner de Código (Cámara)', headerShown: true }} />
-  <Stack.Screen name="AgregarProductos" component={AgregarProductosScreen} options={{ title: 'Agregar Productos', headerShown: true }} />
+  <Stack.Screen name="AgregarProductos" component={AgregarProductosScreen} options={{ headerShown: true, title: 'Agregar Productos' }} />
   <Stack.Screen name="ProcesarPago" component={ProcesarPagoScreen} options={{ title: 'Procesar Pago', headerShown: true }} />
   <Stack.Screen name="ResumenVenta" component={ResumenVentaScreen} options={{ title: 'Resumen de Venta', headerShown: true }} />
   <Stack.Screen name="RegisterClient" component={RegisterClientScreen} options={{ title: 'Registrar Cliente', headerShown: true }} />

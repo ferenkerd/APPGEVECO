@@ -1,9 +1,83 @@
+import { devLog } from '../utils/logger';
+import { Storage } from './storage';
+
+const API_BASE_URL = 'https://zp5qjj4n-8000.use2.devtunnels.ms/';
+
+// Refresca el token de acceso usando el refresh token
+async function refreshAccessToken() {
+  const refresh = await Storage.getItem('refresh');
+  if (!refresh) throw new Error('No refresh token');
+  const res = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh }),
+  });
+  if (!res.ok) throw new Error('No se pudo refrescar el token');
+  const data = await res.json();
+  await Storage.setItem('access', data.access);
+  return data.access;
+}
+
+// Función principal para peticiones a la API con refresco automático de token
+export async function apiFetch(endpoint, options = {}, token = null) {
+  devLog('apiFetch called', { endpoint, options, token });
+  let accessToken = token || await Storage.getItem('access');
+  let headers = {
+    ...(options.headers || {}),
+    'Content-Type': 'application/json',
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  };
+  const url = `${API_BASE_URL}${endpoint}`;
+  devLog('apiFetch: URL', url);
+  devLog('apiFetch: options', { ...options, headers });
+
+  let response = await fetch(url, { ...options, headers });
+  devLog('apiFetch: status', response.status);
+
+  // Si el token está expirado, intentar refrescar y reintentar una vez
+  if ((response.status === 401 || response.status === 403) && accessToken) {
+    devLog('apiFetch: intentando refrescar token...');
+    try {
+      accessToken = await refreshAccessToken();
+      headers = {
+        ...(options.headers || {}),
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      };
+      response = await fetch(url, { ...options, headers });
+      devLog('apiFetch: status (tras refresh)', response.status);
+    } catch (e) {
+      // Si el refresh falla, forzar logout
+      if (global.navigationRef && global.navigationRef.current) {
+        global.navigationRef.current.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+      }
+      if (global.Storage) {
+        global.Storage.deleteItem && global.Storage.deleteItem('access');
+        global.Storage.deleteItem && global.Storage.deleteItem('refresh');
+      }
+      throw new Error('Sesión expirada o no autorizada');
+    }
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    devLog('apiFetch: error', errorText);
+    throw new Error('Error en la petición a la API');
+  }
+  const data = await response.json();
+  devLog('apiFetch: data', data);
+  return data;
+}
+
 // Obtener prefijos (requiere autenticación)
 export async function getPrefixes(accessToken) {
   return apiFetch('prefixes/', { method: 'GET' }, accessToken);
 }
+
 // Registrar un nuevo cliente (requiere accessToken)
-// Campos esperados: first_name, last_name, identity_card, gender, contact_phone, address
 export async function registerClient(clientData, accessToken) {
   return apiFetch(
     'clients/register/',
@@ -14,59 +88,6 @@ export async function registerClient(clientData, accessToken) {
     accessToken
   );
 }
-import { devLog } from '../utils/logger';
-
-// --- Constantes ---
-const API_BASE_URL = 'https://zp5qjj4n-8000.use2.devtunnels.ms/';
-
-// --- Función utilitaria principal ---
-export async function apiFetch(endpoint, options = {}, token = null) {
-  devLog('apiFetch called', { endpoint, options, token });
-  const headers = {
-    ...(options.headers || {}),
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-
-  const url = `${API_BASE_URL}${endpoint}`;
-  devLog('apiFetch: URL', url);
-  devLog('apiFetch: options', { ...options, headers });
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  devLog('apiFetch: status', response.status);
-
-  if (response.status === 401 || response.status === 403) {
-    // Token inválido o expirado: forzar logout y redirección global
-    if (global.navigationRef && global.navigationRef.current) {
-      global.navigationRef.current.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
-    }
-    // Limpiar storage si existe
-    if (global.Storage) {
-      global.Storage.deleteItem && global.Storage.deleteItem('access');
-      global.Storage.deleteItem && global.Storage.deleteItem('refresh');
-    }
-    throw new Error('Sesión expirada o no autorizada');
-  }
-
-  if (!response.ok) {
-    // Manejo de errores global
-    const errorText = await response.text();
-    devLog('apiFetch: error', errorText);
-    throw new Error('Error en la petición a la API');
-  }
-  const data = await response.json();
-  devLog('apiFetch: data', data);
-  return data;
-}
-
-// --- Funciones específicas de API ---
 
 // Logout de usuario
 export async function logoutApi(accessToken, refreshToken) {
@@ -86,6 +107,3 @@ export async function searchClientByCedula(cedula, accessToken) {
   return apiFetch(`clients/search-by-cedula/?cedula=${encodeURIComponent(cedula)}`, { method: 'GET' }, accessToken);
 }
 
-// Ejemplo de uso:
-// import { apiFetch } from '../services/api';
-// const data = await apiFetch('/ruta/', { method: 'GET' });
