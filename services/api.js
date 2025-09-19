@@ -1,3 +1,49 @@
+// Listar ventas por cajero (usuario actual)
+export async function listSalesByCajero(cajeroId, accessToken) {
+  // Asumiendo que el backend soporta filtro por cajero (user o cashier)
+  return apiFetch(`sales/?cajero=${cajeroId}`, { method: 'GET' }, accessToken);
+}
+// --- VENTAS Y PAGOS ---
+
+// Crear una venta u orden
+export async function createSale(saleData, accessToken) {
+  return apiFetch('sales/', {
+    method: 'POST',
+    body: JSON.stringify(saleData)
+  }, accessToken);
+}
+
+// Listar ventas (opcional: status)
+export async function listSales(status = '', accessToken) {
+  const url = status ? `sales/?status=${status}` : 'sales/';
+  return apiFetch(url, { method: 'GET' }, accessToken);
+}
+
+// Obtener detalle de una venta
+export async function getSaleDetail(saleId, accessToken) {
+  return apiFetch(`sales/${saleId}/`, { method: 'GET' }, accessToken);
+}
+
+// Registrar pago de una venta
+export async function registerPayment(paymentData, accessToken) {
+  return apiFetch('payments/', {
+    method: 'POST',
+    body: JSON.stringify(paymentData)
+  }, accessToken);
+}
+
+// Consultar modo de cobro actual
+export async function getPaymentMode(accessToken) {
+  return apiFetch('business/payment-mode/', { method: 'GET' }, accessToken);
+}
+
+// Cambiar modo de cobro (solo admin)
+export async function setPaymentMode(mode, accessToken) {
+  return apiFetch('business/payment-mode/', {
+    method: 'POST',
+    body: JSON.stringify({ mode })
+  }, accessToken);
+}
 import { devLog } from '../utils/logger';
 import { Storage } from './storage';
 

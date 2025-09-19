@@ -536,7 +536,16 @@ export default function AgregarProductosScreen({ navigation, route }) {
                 if (count === 0) {
                   clearInterval(pressIntervalPay.current);
                   setIsPressingPay(false);
-                  navigation.navigate('ProcesarPago', { client, products });
+                  // Calcular subtotal y descuento si aplica
+                  const subtotal = products.reduce((acc, p) => acc + (p.sale_price || p.price || 0) * (p.qty || p.quantity || 1), 0);
+                  // Aquí podrías calcular el descuento real si tienes lógica
+                  const discount = 0; // Ajusta si tienes lógica de descuento
+                  navigation.navigate('CheckoutScreen', {
+                    selectedClient: client,
+                    selectedProducts: products,
+                    total: subtotal,
+                    discount,
+                  });
                 }
               }, 1000);
             }}

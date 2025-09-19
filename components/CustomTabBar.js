@@ -37,7 +37,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
         }}
       >
         {state.routes.map((route, index) => {
-          if (!['Dashboard', 'IniciarCompra', 'HistorialVentas'].includes(route.name)) return null;
+          if (!['Dashboard', 'IniciarCompra', 'HistorialOperaciones'].includes(route.name)) return null;
           const { options } = descriptors[route.key];
           const label =
             options.tabBarLabel !== undefined
@@ -83,7 +83,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
             );
           }
           let iconName = 'home';
-          if (route.name === 'HistorialVentas') iconName = 'history';
+          if (route.name === 'HistorialOperaciones') iconName = 'history';
           return (
             <TouchableOpacity
               key={route.key}
@@ -95,6 +95,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 paddingVertical: 8,
+                display: 'flex',
               }}
               activeOpacity={0.7}
             >
@@ -102,12 +103,13 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 name={iconName}
                 size={28}
                 color={isFocused ? palette.primary : palette.textSecondary}
+                style={{ alignSelf: 'center' }}
               />
               <Text
                 fontSize={12}
                 color={isFocused ? palette.primary : palette.textSecondary}
                 mt={1}
-                style={{ fontWeight: isFocused ? 'bold' : 'normal' }}
+                style={{ fontWeight: isFocused ? 'bold' : 'normal', textAlign: 'center', width: '100%' }}
               >
                 {label}
               </Text>

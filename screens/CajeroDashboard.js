@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import HistorialVentasScreen from './HistorialVentasScreen';
 import { SafeAreaView, Platform } from 'react-native';
 import { Box, Text, VStack, HStack } from '@gluestack-ui/themed';
 import { CustomButton } from '../components/CustomButton';
@@ -14,16 +15,7 @@ import TabHeader from '../components/TabHeader';
 // import StartSaleScreen from './StartSaleScreen';
 
 // Pantallas básicas para cada pestaña
-function HistorialVentasScreen() {
-  return (
-    <Box flex={1} bg="transparent">
-      {/* <AppHeader />  <-- Elimina este header aquí */}
-      <Box flex={1} alignItems="center" justifyContent="center">
-        <Text fontSize={22} fontWeight="bold">Historial de Ventas</Text>
-      </Box>
-    </Box>
-  );
-}
+// HistorialVentasScreen ahora es importado
 
 function IniciarCompraScreen({ navigation }) {
   React.useEffect(() => {
@@ -94,13 +86,13 @@ export default function CajeroDashboardTabs() {
         }}
       />
       <Tab.Screen
-        name="HistorialVentas"
+        name="HistorialOperaciones"
         component={HistorialVentasScreen}
         options={{
-          tabBarLabel: 'Historial de Ventas',
-          title: 'Historial de Ventas',
+          tabBarLabel: 'Historial de Operaciones',
+          title: 'Historial de Operaciones',
           headerShown: true,
-          header: () => <TabHeader title="Historial de Ventas" />,
+          header: () => <TabHeader title="Historial de Operaciones" />,
         }}
       />
     </Tab.Navigator>

@@ -8,7 +8,7 @@ import { Box, Text } from '@gluestack-ui/themed';
 function HistorialVentasScreen() {
   return (
     <Box flex={1} alignItems="center" justifyContent="center">
-      <Text fontSize={22} fontWeight="bold">Historial de Ventas</Text>
+      <Text fontSize={22} fontWeight="bold">Historial de Operaciones</Text>
     </Box>
   );
 }
@@ -50,10 +50,10 @@ export default function AgregarProductosTabs() {
         name="HistorialVentas"
         component={HistorialVentasScreen}
         options={{
-          tabBarLabel: 'Historial de Ventas',
-          title: 'Historial de Ventas',
-          headerShown: true,
-          header: () => <TabHeader title="Historial de Ventas" />,
+      tabBarLabel: 'Historial de Operaciones',
+      title: 'Historial de Operaciones',
+      headerShown: true,
+      header: () => <TabHeader title="Historial de Operaciones" />,
         }}
       />
     </Tab.Navigator>

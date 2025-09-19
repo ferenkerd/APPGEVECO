@@ -23,7 +23,9 @@ import RegisterClientScreen from './screens/RegisterClientScreen';
 import IdentificarClienteScreen from './screens/IdentificarClienteScreen';
 import AgregarProductosScreen from './screens/AgregarProductosScreen';
 import ProcesarPagoScreen from './screens/ProcesarPagoScreen';
+import CheckoutScreen from './screens/CheckoutScreen';
 import ResumenVentaScreen from './screens/ResumenVentaScreen';
+import DetalleVentaScreen from './screens/DetalleVentaScreen';
 import ToastTestScreen from './screens/ToastTestScreen';
 import { ActivityIndicator, View, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -68,12 +70,14 @@ function AppNavigator() {
   <Stack.Screen name="CameraBarcode" component={CameraBarcodeScreen} options={{ title: 'Escáner de Código (Cámara)', headerShown: true }} />
   <Stack.Screen name="AgregarProductos" component={AgregarProductosScreen} options={{ headerShown: true, title: 'Agregar Productos' }} />
   <Stack.Screen name="ProcesarPago" component={ProcesarPagoScreen} options={{ title: 'Procesar Pago', headerShown: true }} />
+  <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} options={{ title: 'Checkout', headerShown: true }} />
   <Stack.Screen name="ResumenVenta" component={ResumenVentaScreen} options={{ title: 'Resumen de Venta', headerShown: true }} />
   <Stack.Screen name="RegisterClient" component={RegisterClientScreen} options={{ title: 'Registrar Cliente', headerShown: true }} />
   <Stack.Screen name="AlmacenistaDashboard" component={AlmacenistaDashboard} options={{ headerShown: false }} />
   <Stack.Screen name="RegistrarProducto" component={RegistrarProductoScreen} options={{ title: 'Registrar Producto', headerShown: true }} />
       <Stack.Screen name="AdministradorDashboard" component={AdministradorDashboard} options={{ headerShown: false }} />
   <Stack.Screen name="ToastTest" component={ToastTestScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DetalleVenta" component={DetalleVentaScreen} options={{ title: 'Detalle de Venta', headerShown: true, presentation: 'card' }} />
     </Stack.Navigator>
   );
 }
