@@ -24,7 +24,7 @@ export default function EditarClienteScreen({ navigation, route }) {
     gender: client.gender || '',
     phone: client.contact_phone || '',
     address: client.address || '',
-    prefix: client.prefix?.id || ''
+    prefix: client.prefix?.id ? String(client.prefix.id) : (client.prefix ? String(client.prefix) : '')
   });
   const [clientError, setClientError] = useState('');
   const [prefixes, setPrefixes] = useState([]);
@@ -69,9 +69,15 @@ export default function EditarClienteScreen({ navigation, route }) {
         <FormInput label="Cédula" value={editClient.id} onChangeText={v => setEditClient({ ...editClient, id: v })} keyboardType="numeric" />
         <FormInput label="Género" value={editClient.gender} onChangeText={v => setEditClient({ ...editClient, gender: v })} />
         <FormInput label="Dirección" value={editClient.address} onChangeText={v => setEditClient({ ...editClient, address: v })} />
-        <Select selectedValue={editClient.prefix} onValueChange={v => setEditClient({ ...editClient, prefix: v })} accessibilityLabel="Prefijo">
+        <Select selectedValue={editClient.prefix} onValueChange={v => setEditClient({ ...editClient, prefix: String(v) })} accessibilityLabel="Prefijo">
           <SelectTrigger>
-            <SelectInput placeholder="Prefijo" />
+            <SelectInput
+              placeholder="Prefijo"
+              value={(() => {
+                const selected = prefixes.find(p => String(p.id) === String(editClient.prefix));
+                return selected ? `${selected.code} (${selected.company})` : '';
+              })()}
+            />
             <SelectIcon as={MaterialIcons} name="arrow-drop-down" />
           </SelectTrigger>
           <SelectPortal>
@@ -81,7 +87,7 @@ export default function EditarClienteScreen({ navigation, route }) {
                 <SelectDragIndicator />
               </SelectDragIndicatorWrapper>
               {prefixes.map(pref => (
-                <SelectItem key={pref.id} label={`+58 ${pref.code} (${pref.company})`} value={pref.id} />
+                <SelectItem key={pref.id} label={`${pref.code} (${pref.company})`} value={String(pref.id)} />
               ))}
             </SelectContent>
           </SelectPortal>
