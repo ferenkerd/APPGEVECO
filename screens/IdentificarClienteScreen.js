@@ -110,10 +110,26 @@ export default function IdentificarClienteScreen({ navigation, route }) {
         {/* Modal tipo card para mostrar datos del cliente */}
         <Modal isOpen={showClientModal} onClose={() => setShowClientModal(false)}>
           <ModalBackdrop />
-          <ModalContent style={{ borderRadius: 16, padding: 0, backgroundColor: palette.surface, minWidth: 300, minHeight: 270, overflow: 'hidden' }}>
-            {/* Título fijo arriba */}
-            <Box width="100%" p={20} pb={12} alignItems="center">
-              <Text color={palette.text} fontWeight="bold" fontSize={22}>Cliente encontrado</Text>
+          <ModalContent style={{ borderRadius: 16, padding: 0, backgroundColor: palette.surface, minWidth: 280, minHeight: 290, overflow: 'hidden' }}>
+            {/* Título e icono perfectamente alineados */}
+            <Box width="100%" pt={20} pb={12} px={20} flexDirection="row" alignItems="center" justifyContent="center" position="relative">
+              <Text color={palette.text} fontWeight="bold" fontSize={22} textAlign="center" flex={1}>
+                Cliente encontrado
+              </Text>
+              <Button
+                variant="link"
+                p={0}
+                minWidth={32}
+                minHeight={32}
+                ml={8}
+                alignSelf="center"
+                onPress={() => {
+                  setShowClientModal(false);
+                  navigation.navigate('EditarCliente', { client });
+                }}
+              >
+                <MaterialIcons name="edit" size={24} color={palette.primary} />
+              </Button>
             </Box>
             {/* Contenido en formato tabla con bordes y fondo alterno */}
             <Box borderRadius={16} mb={4} mt={8} mx={8} flex={1} borderWidth={1} borderColor={palette.secondary} bg={palette.surface}>

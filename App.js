@@ -20,6 +20,7 @@ import AdministradorDashboard from './screens/AdministradorDashboard';
 import StartScreen from './screens/StartScreen';
 // import StartSaleScreen from './screens/StartSaleScreen';
 import RegisterClientScreen from './screens/RegisterClientScreen';
+import EditarClienteScreen from './screens/EditarClienteScreen';
 import IdentificarClienteScreen from './screens/IdentificarClienteScreen';
 import AgregarProductosScreen from './screens/AgregarProductosScreen';
 import ProcesarPagoScreen from './screens/ProcesarPagoScreen';
@@ -73,6 +74,7 @@ function AppNavigator() {
   <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} options={{ title: 'Checkout', headerShown: true }} />
   <Stack.Screen name="ResumenVenta" component={ResumenVentaScreen} options={{ title: 'Resumen de Venta', headerShown: true }} />
   <Stack.Screen name="RegisterClient" component={RegisterClientScreen} options={{ title: 'Registrar Cliente', headerShown: true }} />
+  <Stack.Screen name="EditarCliente" component={EditarClienteScreen} options={{ title: 'Editar Cliente', headerShown: true }} />
   <Stack.Screen name="AlmacenistaDashboard" component={AlmacenistaDashboard} options={{ headerShown: false }} />
   <Stack.Screen name="RegistrarProducto" component={RegistrarProductoScreen} options={{ title: 'Registrar Producto', headerShown: true }} />
       <Stack.Screen name="AdministradorDashboard" component={AdministradorDashboard} options={{ headerShown: false }} />
