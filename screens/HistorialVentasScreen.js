@@ -128,6 +128,16 @@ export default function HistorialOperacionesScreen() {
             </Box>
           </HStack>
         </Box>
+        {/* DEBUG: Mostrar logs de operaciones y usuario para depuración */}
+        {(() => {
+          try {
+            const cajeroId = user?.user?.user_id || user?.user?.id || user?.user?.pk || user?.user?.username || user?.user?.email;
+            console.log('CAJERO ID:', cajeroId);
+            operaciones.forEach((op) => {
+              console.log('OP.user:', op.user);
+            });
+          } catch (e) {}
+        })()}
         {loading ? (
           <Spinner size="large" />
         ) : operaciones.length === 0 ? (
@@ -135,6 +145,29 @@ export default function HistorialOperacionesScreen() {
         ) : (
           <VStack space="md">
             {operaciones
+              .filter((op) => {
+                // Filtrar por el cajero autenticado usando cashier.id o cashier.username
+                const cajeroId = user?.user?.user_id || user?.user?.id || user?.user?.pk || user?.user?.username || user?.user?.email;
+                let opCajeroId = null;
+                if (op.cashier && typeof op.cashier === 'object') {
+                  opCajeroId = op.cashier.id || op.cashier.user_id || op.cashier.pk || op.cashier.username || op.cashier.email;
+                } else if (typeof op.cashier === 'string' || typeof op.cashier === 'number') {
+                  opCajeroId = op.cashier;
+                }
+                // Permitir coincidencia por id o username
+                return (
+                  String(opCajeroId) === String(cajeroId) ||
+                  (op.cashier && typeof op.cashier === 'object' && (
+                    (op.cashier.username && op.cashier.username === user?.user?.username)
+                  ))
+                );
+              })
+              .sort((a, b) => {
+                // Ordenar por fecha descendente (más reciente primero)
+                const fechaA = new Date(a.sale_date || a.created_at || a.fecha || 0);
+                const fechaB = new Date(b.sale_date || b.created_at || b.fecha || 0);
+                return fechaB - fechaA;
+              })
               .filter((venta) => {
                 const q = search.toLowerCase();
                 if (!q) return true;
@@ -168,10 +201,15 @@ export default function HistorialOperacionesScreen() {
                 return true;
               })
               .map((operacion) => {
-                const isPaid = (operacion.status || '').toLowerCase() === 'paid';
-                const isPending = (operacion.status || '').toLowerCase() === 'pending';
-                const statusColor = isPaid ? '#22bb33' : isPending ? '#ff4444' : '#888';
-                const statusText = isPaid ? 'Pagada' : isPending ? 'Pendiente' : (operacion.status || '');
+                let statusColor = '#888';
+                let statusText = operacion.status_display || '';
+                if ((operacion.status || '').toLowerCase() === 'paid') {
+                  statusColor = '#22bb33';
+                } else if ((operacion.status || '').toLowerCase() === 'pending') {
+                  statusColor = '#ff4444';
+                } else if ((operacion.status || '').toLowerCase() === 'cancelled') {
+                  statusColor = '#888';
+                }
                 return (
                   <Box key={operacion.id} borderWidth={1} borderColor="#eee" borderRadius={16} p={16} mb={12} bg="#fff" shadow={1}>
                     <HStack justifyContent="space-between" alignItems="center" mb={2}>
@@ -182,7 +220,35 @@ export default function HistorialOperacionesScreen() {
                     <Text color="#888" fontSize={13} mb={1}>
                       {operacion.details ? `${operacion.details.length} producto${operacion.details.length === 1 ? '' : 's'}` : '0 productos'}
                     </Text>
-                    <Text color="#888" fontSize={13} mb={1}>{formatDate(operacion.sale_date || operacion.created_at || operacion.fecha || '')}</Text>
+                    {(() => {
+                      const rawDate = operacion.sale_date || operacion.created_at || operacion.fecha || '';
+                      let fecha = '', hora = '';
+                      if (rawDate) {
+                        const d = new Date(rawDate);
+                        if (!isNaN(d)) {
+                          const day = String(d.getDate()).padStart(2, '0');
+                          const month = String(d.getMonth() + 1).padStart(2, '0');
+                          const year = d.getFullYear();
+                          fecha = `${day}/${month}/${year}`;
+                          let hours = d.getHours();
+                          const mins = String(d.getMinutes()).padStart(2, '0');
+                          let ampm = 'AM';
+                          if (hours >= 12) {
+                            ampm = 'PM';
+                          }
+                          hours = hours % 12;
+                          if (hours === 0) hours = 12;
+                          hora = `${String(hours).padStart(2, '0')}:${mins} ${ampm}`;
+                        } else {
+                          fecha = rawDate;
+                        }
+                      }
+                      return (
+                        <Text color="#888" fontSize={13} mb={1}>
+                          {fecha}{hora ? ` ${hora}` : ''}
+                        </Text>
+                      );
+                    })()}
                     <Text color="#111" fontSize={14} mb={1}>
                       Cliente: {operacion.client && typeof operacion.client === 'object'
                         ? `${operacion.client.first_name || ''} ${operacion.client.last_name || ''}`
@@ -209,33 +275,113 @@ export default function HistorialOperacionesScreen() {
               <ScrollView showsVerticalScrollIndicator={false}>
                 <Box px={16} pt={16}>
                   <Text fontSize={22} fontWeight="bold" mb={2}>Operación #{detalleOperacion?.id}</Text>
-                  <Text color="#888" fontSize={13} mb={1}>{formatDate(detalleOperacion?.sale_date || detalleOperacion?.created_at || detalleOperacion?.fecha || '')}</Text>
-                  <Text mb={2} fontWeight="bold" color={
-                    (detalleOperacion?.status || '').toLowerCase() === 'paid' ? '#22bb33' :
-                    (detalleOperacion?.status || '').toLowerCase() === 'pending' ? '#ff4444' : '#888'
-                  }>
-                    Estado: {
-                      (detalleOperacion?.status || '').toLowerCase() === 'paid'
-                        ? 'Pagada'
-                        : (detalleOperacion?.status || '').toLowerCase() === 'pending'
-                        ? 'Pendiente'
-                        : (detalleOperacion?.status || '')
+                  {/* Fecha a la izquierda, hora a la derecha con label */}
+                  {(() => {
+                    const rawDate = detalleOperacion?.sale_date || detalleOperacion?.created_at || detalleOperacion?.fecha || '';
+                    let fecha = '', hora = '';
+                    if (rawDate) {
+                      const d = new Date(rawDate);
+                      if (!isNaN(d)) {
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const year = d.getFullYear();
+                        fecha = `${day}/${month}/${year}`;
+                        let hours = d.getHours();
+                        const mins = String(d.getMinutes()).padStart(2, '0');
+                        let ampm = 'AM';
+                        if (hours >= 12) {
+                          ampm = 'PM';
+                        }
+                        hours = hours % 12;
+                        if (hours === 0) hours = 12;
+                        hora = `${String(hours).padStart(2, '0')}:${mins} ${ampm}`;
+                      } else {
+                        fecha = rawDate;
+                      }
                     }
-                  </Text>
+                    return (
+                      <HStack justifyContent="space-between" alignItems="center" mb={1}>
+                        <Text color="#888" fontSize={13}>Fecha: {fecha}</Text>
+                        <Text color="#888" fontSize={13}>Hora: {hora}</Text>
+                      </HStack>
+                    );
+                  })()}
+                  <HStack justifyContent="space-between" alignItems="center" mb={2}>
+                    <Text fontWeight="bold" color={
+                      (detalleOperacion?.status || '').toLowerCase() === 'paid' ? '#22bb33' :
+                      (detalleOperacion?.status || '').toLowerCase() === 'pending' ? '#ff4444' : '#888'
+                    }>
+                      Estado: {detalleOperacion?.status_display || ''}
+                    </Text>
+                    {detalleOperacion?.cashier && (
+                      <Text color="#888" fontSize={13}>
+                        Cajero ID: {detalleOperacion.cashier.id || detalleOperacion.cashier.user_id || detalleOperacion.cashier.pk || detalleOperacion.cashier.username || 'N/A'}
+                      </Text>
+                    )}
+                  </HStack>
                   <Divider my={8} />
                   <Box mb={2} bg="#f5f6fa" borderRadius={12} px={12} py={10}>
                     <Text fontWeight="bold" color="#111" fontSize={15} style={{ letterSpacing: 1, marginBottom: 6 }}>Cliente</Text>
-                    <Text fontSize={15} mb={1} color="#888">
-                      {detalleOperacion?.client && typeof detalleOperacion.client === 'object'
-                        ? `${detalleOperacion.client.first_name || ''} ${detalleOperacion.client.last_name || ''}`.trim()
-                        : (detalleOperacion?.client_name || detalleOperacion?.client || 'Sin cliente')}
-                    </Text>
-                    {detalleOperacion?.client && typeof detalleOperacion.client === 'object' && (
-                      <>
-                        {detalleOperacion.client.identity_card && <Text color="#888">Cédula: {detalleOperacion.client.identity_card}</Text>}
-                        {detalleOperacion.client.contact_phone && <Text color="#888">Tel: {detalleOperacion.client.contact_phone}</Text>}
-                      </>
-                    )}
+                    {/* Grilla 2x2: nombre y teléfono arriba, cédula y email/ID abajo */}
+                    <HStack alignItems="center" mb={0}>
+                      {/* Nombre (arriba izquierda) */}
+                      <Box flex={1}>
+                        <Text fontSize={15} color="#888" numberOfLines={1}>
+                          {detalleOperacion?.client && typeof detalleOperacion.client === 'object'
+                            ? `${detalleOperacion.client.first_name || ''} ${detalleOperacion.client.last_name || ''}`.trim()
+                            : (detalleOperacion?.client_name || detalleOperacion?.client || 'Sin cliente')}
+                        </Text>
+                      </Box>
+                      {/* Teléfono (arriba derecha) */}
+                      <Box flex={1} alignItems="flex-end">
+                        <Text color="#888" fontSize={15} numberOfLines={1}>
+                          {(() => {
+                            let tel = '';
+                            let prefix = '';
+                            if (detalleOperacion?.prefix && detalleOperacion.prefix.code) {
+                              prefix = String(detalleOperacion.prefix.code);
+                            }
+                            if (detalleOperacion?.client && typeof detalleOperacion.client === 'object' && detalleOperacion.client.contact_phone) {
+                              tel = detalleOperacion.client.contact_phone;
+                            } else if (detalleOperacion?.contact_phone) {
+                              tel = detalleOperacion.contact_phone;
+                            }
+                            if (tel) {
+                              // Si hay prefix, usarlo sin +58
+                              if (prefix) {
+                                tel = `${prefix}${tel.replace(/^0+/, '')}`;
+                              } else {
+                                // Si ya tiene prefijo +58, quitarlo
+                                tel = tel.replace(/^\+?58/, '');
+                                tel = tel.replace(/^0+/, '');
+                              }
+                              return tel;
+                            }
+                            return '';
+                          })()}
+                        </Text>
+                      </Box>
+                    </HStack>
+                    <HStack alignItems="center" mt={-2}>
+                      {/* Cédula (abajo izquierda) */}
+                      <Box flex={1}>
+                        <Text color="#888" fontSize={15} numberOfLines={1}>
+                          {detalleOperacion?.client && typeof detalleOperacion.client === 'object' && detalleOperacion.client.identity_card
+                            ? detalleOperacion.client.identity_card
+                            : detalleOperacion?.client && typeof detalleOperacion.client === 'object' && detalleOperacion.client.id
+                              ? detalleOperacion.client.id
+                              : ''}
+                        </Text>
+                      </Box>
+                      {/* Email o ID (abajo derecha, opcional) */}
+                      <Box flex={1} alignItems="flex-end">
+                        <Text color="#888" fontSize={15} numberOfLines={1}>
+                          {detalleOperacion?.client && typeof detalleOperacion.client === 'object' && detalleOperacion.client.email
+                            ? detalleOperacion.client.email
+                            : ''}
+                        </Text>
+                      </Box>
+                    </HStack>
                   </Box>
                   <Divider my={8} />
                   <Box mb={2} bg="#f5f6fa" borderRadius={12} px={12} py={10}>
