@@ -19,30 +19,37 @@ export default function CheckoutScreen() {
   const [paymentMode, setPaymentMode] = React.useState('');
   const { user } = useAuth();
 
-  React.useEffect(() => {
-    // Cargar métodos de pago desde la API
-    const fetchPaymentMethods = async () => {
-      try {
-        const res = await fetch('https://zp5qjj4n-8000.use2.devtunnels.ms/payment-methods/', {
-          headers: { Authorization: `Bearer ${user?.access}` },
-        });
-        const data = await res.json();
-        setPaymentMethods(data);
-        if (!Array.isArray(data) || data.length === 0) {
-          Toast.show({
-            type: 'info',
-            text1: 'Métodos de pago',
-            text2: 'No hay métodos de pago disponibles. Contacta al administrador.'
-          });
-        }
-      } catch {
+  // Estado para error de métodos de pago
+  const [paymentMethodsError, setPaymentMethodsError] = React.useState(false);
+
+  // Función para cargar métodos de pago
+  const fetchPaymentMethods = async () => {
+    setPaymentMethodsError(false);
+    try {
+      const res = await fetch('https://zp5qjj4n-8000.use2.devtunnels.ms/payment-methods/', {
+        headers: { Authorization: `Bearer ${user?.access}` },
+      });
+      const data = await res.json();
+      setPaymentMethods(data);
+      if (!Array.isArray(data) || data.length === 0) {
+        setPaymentMethodsError(true);
         Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'No se pudieron cargar los métodos de pago.'
+          type: 'info',
+          text1: 'Métodos de pago',
+          text2: 'No hay métodos de pago disponibles. Contacta al administrador.'
         });
       }
-    };
+    } catch {
+      setPaymentMethodsError(true);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudieron cargar los métodos de pago.'
+      });
+    }
+  };
+
+  React.useEffect(() => {
     if (user?.access) fetchPaymentMethods();
     const fetchMode = async () => {
       try {
@@ -197,6 +204,19 @@ export default function CheckoutScreen() {
               ))}
             </Picker>
           </Box>
+          {paymentMethodsError && (
+            <Button
+              variant="outline"
+              borderColor="#f00"
+              mt={-8}
+              mb={12}
+              borderRadius={8}
+              style={{ paddingVertical: 10, minHeight: 40, width: '100%', borderWidth: 1 }}
+              onPress={fetchPaymentMethods}
+            >
+              <Text color="#f00" fontWeight="bold" fontSize={15} style={{ textAlign: 'center' }}>Reintentar cargar métodos de pago</Text>
+            </Button>
+          )}
           {/* Botón de cobro solo visible según modo y rol corregido */}
           {(((user?.user?.job_position === 4) && paymentMode === 'cashier') ||
             ((user?.user?.job_position === 1 || user?.user?.job_position === 2) && paymentMode === 'admin')) && (
