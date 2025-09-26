@@ -12,7 +12,8 @@ import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import CategoryList from '../components/CategoryList';
-import { Modal, Animated, Dimensions, TouchableWithoutFeedback, PanResponder } from 'react-native';
+import { Modal, Animated, Dimensions, TouchableWithoutFeedback, PanResponder, ScrollView } from 'react-native';
+import { SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator } from '@gluestack-ui/themed';
 import { apiFetch } from '../services/api';
 
 // AgregarProductosScreen debe ser un componente funcional
@@ -93,10 +94,10 @@ export default function AgregarProductosScreen({ navigation, route }) {
             </TouchableOpacity>
             <Text fontSize={12} color={palette.primary} mt={2} style={{ fontWeight: tab === 'barcode' ? 'bold' : 'normal' }}>Escanear</Text>
           </View>
-          {/* Procesar Pago */}
+          {/* Otros (abre sheetType 'all') */}
           <TouchableOpacity
             accessibilityRole="button"
-            onPress={() => setSheetType('pago')}
+            onPress={() => setSheetType('all')}
             style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
             activeOpacity={0.7}
           >
@@ -274,132 +275,135 @@ export default function AgregarProductosScreen({ navigation, route }) {
         </Text>
         {/* Botón para abrir el Sheet */}
         {/* El botón principal ahora será el escáner flotante, se elimina el botón superior */}
-      {/* Modal deslizable para Buscar y Todos */}
-      <Modal
-        visible={!!sheetType}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setSheetType(null)}
-      >
-        <TouchableWithoutFeedback onPress={() => setSheetType(null)}>
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' }} />
-        </TouchableWithoutFeedback>
-        <View style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: palette.surface,
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          padding: 16,
-          minHeight: 320,
-          maxHeight: '80%',
-        }}>
-          {sheetType === 'search' && (
-            <>
-              <Text fontSize={18} fontWeight="bold" color={palette.text} mt={2} mb={1}>Buscar por nombre, precio o código</Text>
-              <FormInput
-                placeholder="Buscar producto"
-                value={productQuery}
-                onChangeText={setProductQuery}
-                backgroundColor={palette.input}
-                textColor={palette.text}
-                style={{ width: '100%' }}
-              />
-              <FlatList
-                data={filteredProducts}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                  <HStack justifyContent="space-between" alignItems="center" bg={palette.input} p={2} borderRadius={6} mb={2}>
-                    <VStack alignItems="flex-start" flex={1}>
-                      <Text color={palette.text} fontWeight="bold">{item.name}</Text>
-                      <Text color={palette.text} fontSize={12}>Código: {item.id}</Text>
-                      <Text color={palette.text} fontSize={12}>Código de barras: {item.code || 'N/A'}</Text>
-                      <Text color={palette.text} fontSize={12}>Precio: ${item.sale_price}</Text>
-                    </VStack>
-                    <Button
-                      size="sm"
-                      bg={palette.primary}
-                      onPress={async () => {
-                        const existing = products.find(p => p.id === item.id);
-                        if (existing) {
-                          setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
-                        } else {
-                          setProducts([...products, { ...item, qty: 1 }]);
-                        }
-                        try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch {}
-                        try {
-                          const { sound } = await Audio.Sound.createAsync(
-                            require('../assets/beep.mp3'),
-                            { shouldPlay: true }
-                          );
-                          // Liberar el recurso después de reproducir
-                          sound.setOnPlaybackStatusUpdate(status => {
-                            if (status.didJustFinish) sound.unloadAsync();
+  {/* Modal de búsqueda (sheet), de pago y de otros */}
+      <SelectPortal isOpen={sheetType === 'search'} onClose={() => setSheetType(null)}>
+        <SelectBackdrop onPress={() => setSheetType(null)} />
+        <SelectContent style={{ backgroundColor: palette.surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, width: '100%', maxWidth: '100%', maxHeight: '80%', minHeight: 320, paddingBottom: 24 }}>
+          <SelectDragIndicatorWrapper>
+            <SelectDragIndicator />
+          </SelectDragIndicatorWrapper>
+          <Box style={{ width: '100%', maxWidth: '100%', paddingBottom: 24 }}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
+              <Box px={8} pt={8}>
+                <Text fontSize={18} fontWeight="bold" color={palette.text} mt={2} mb={1}>Buscar por nombre, precio o código</Text>
+                <FormInput
+                  placeholder="Buscar producto"
+                  value={productQuery}
+                  onChangeText={setProductQuery}
+                  backgroundColor={palette.input}
+                  textColor={palette.text}
+                  style={{ width: '100%' }}
+                />
+                {filteredProducts.length === 0 ? (
+                  <Text color={palette.text} textAlign="center" mt={4}>No hay productos disponibles.</Text>
+                ) : (
+                  filteredProducts.map(item => (
+                    <HStack key={item.id} justifyContent="space-between" alignItems="center" bg={palette.input} p={2} borderRadius={6} mb={2}>
+                      <VStack alignItems="flex-start" flex={1}>
+                        <Text color={palette.text} fontWeight="bold">{item.name}</Text>
+                        <Text color={palette.text} fontSize={12}>Código: {item.id}</Text>
+                        <Text color={palette.text} fontSize={12}>Código de barras: {item.code || 'N/A'}</Text>
+                        <Text color={palette.text} fontSize={12}>Precio: ${item.sale_price}</Text>
+                      </VStack>
+                      <Button
+                        size="sm"
+                        bg={palette.primary}
+                        onPress={async () => {
+                          const existing = products.find(p => p.id === item.id);
+                          if (existing) {
+                            setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+                          } else {
+                            setProducts([...products, { ...item, qty: 1 }]);
+                          }
+                          try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch {}
+                          try {
+                            const { sound } = await Audio.Sound.createAsync(
+                              require('../assets/beep.mp3'),
+                              { shouldPlay: true }
+                            );
+                            sound.setOnPlaybackStatusUpdate(status => {
+                              if (status.didJustFinish) sound.unloadAsync();
+                            });
+                          } catch {}
+                          Toast.show({
+                            type: 'success',
+                            text1: 'Producto agregado',
+                            text2: item.name,
                           });
-                        } catch {}
-                        Toast.show({
-                          type: 'success',
-                          text1: 'Producto agregado',
-                          text2: item.name,
-                        });
-                      }}
-                    >
-                      <Text color="#fff">Agregar</Text>
-                    </Button>
-                  </HStack>
+                        }}
+                      >
+                        <Text color="#fff">Agregar</Text>
+                      </Button>
+                    </HStack>
+                  ))
                 )}
-                ListEmptyComponent={<Text color={palette.text} textAlign="center" mt={4}>No hay productos disponibles.</Text>}
-                style={{ flex: 1, minHeight: 120, width: '100%' }}
-              />
-            </>
-          )}
-          {sheetType === 'pago' && (
-            <Box>
-              {client && (
-                <Box bg={palette.card} borderRadius={14} p={18} alignItems="flex-start" shadow={2} mt={2} mb={2}>
-                  <HStack alignItems="center" mb={3}>
-                    <MaterialIcons name="person" size={32} color={palette.primary} style={{ marginRight: 10 }} />
-                    <Text fontSize={20} fontWeight="bold" color={palette.primary}>Información del cliente</Text>
-                  </HStack>
-                  <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Nombre:</Text> {client.first_name || client.nombre || 'N/A'}</Text>
-                  <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">ID:</Text> {client.id || 'N/A'}</Text>
-                  {client.email && (
-                    <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Email:</Text> {client.email}</Text>
-                  )}
-                  {client.phone && (
-                    <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Teléfono:</Text> {client.phone}</Text>
-                  )}
-                </Box>
-              )}
-              {/* Card visual para aplicar descuento/cupón */}
-              <Box bg={palette.card} borderRadius={14} p={18} alignItems="flex-start" shadow={2} mt={2} mb={2} width="100%">
-                <HStack alignItems="center" mb={3}>
-                  <MaterialIcons name="local-offer" size={28} color={palette.primary} style={{ marginRight: 10 }} />
-                  <Text fontSize={18} fontWeight="bold" color={palette.primary}>Aplicar descuento/cupón</Text>
-                </HStack>
-                <Box flexDirection="row" alignItems="center" width="100%">
-                  <FormInput
-                    placeholder="Código de descuento"
-                    value={discountCode}
-                    onChangeText={setDiscountCode}
-                    backgroundColor={palette.surface}
-                    textColor={palette.text}
-                    style={{ flex: 1, marginRight: 8 }}
-                  />
-                  <Button size="sm" bg={palette.primary} onPress={handleApplyDiscount}>
-                    <Text color="#fff">Aplicar</Text>
-                  </Button>
-                </Box>
-                {discountMessage ? (
-                  <Text color={discountSuccess ? '#43a047' : '#e53935'} mt={2}>{discountMessage}</Text>
-                ) : null}
               </Box>
-            </Box>
-          )}
-        </View>
-      </Modal>
+            </ScrollView>
+          </Box>
+        </SelectContent>
+      </SelectPortal>
+      {/* Modal de pago sigue igual (puedes agregar aquí otro contenido si lo necesitas) */}
+      {sheetType === 'pago' && (
+        <Box>
+          <Text color={palette.text} fontSize={18} textAlign="center" mt={4}>Aquí puedes agregar contenido de pago si lo necesitas.</Text>
+        </Box>
+      )}
+
+      {/* Sheet de Otros (all) con información del cliente y cupón */}
+      <SelectPortal isOpen={sheetType === 'all'} onClose={() => setSheetType(null)}>
+        <SelectBackdrop onPress={() => setSheetType(null)} />
+        <SelectContent style={{ backgroundColor: palette.surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, width: '100%', maxWidth: '100%', maxHeight: '80%', minHeight: 320, paddingBottom: 24 }}>
+          <SelectDragIndicatorWrapper>
+            <SelectDragIndicator />
+          </SelectDragIndicatorWrapper>
+          <Box style={{ width: '100%', maxWidth: '100%', paddingBottom: 24 }}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
+              <Box px={8} pt={8}>
+                <Text fontSize={18} fontWeight="bold" color={palette.text} mt={2} mb={1}>Opciones adicionales</Text>
+                {client && (
+                  <Box bg={palette.card} borderRadius={14} p={18} alignItems="flex-start" shadow={2} mt={2} mb={2}>
+                    <HStack alignItems="center" mb={3}>
+                      <MaterialIcons name="person" size={32} color={palette.primary} style={{ marginRight: 10 }} />
+                      <Text fontSize={20} fontWeight="bold" color={palette.primary}>Información del cliente</Text>
+                    </HStack>
+                    <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Nombre:</Text> {client.first_name || client.nombre || 'N/A'}</Text>
+                    <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">ID:</Text> {client.id || 'N/A'}</Text>
+                    {client.email && (
+                      <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Email:</Text> {client.email}</Text>
+                    )}
+                    {client.phone && (
+                      <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Teléfono:</Text> {client.phone}</Text>
+                    )}
+                  </Box>
+                )}
+                {/* Card visual para aplicar descuento/cupón */}
+                <Box bg={palette.card} borderRadius={14} p={18} alignItems="flex-start" shadow={2} mt={2} mb={2} width="100%">
+                  <HStack alignItems="center" mb={3}>
+                    <MaterialIcons name="local-offer" size={28} color={palette.primary} style={{ marginRight: 10 }} />
+                    <Text fontSize={18} fontWeight="bold" color={palette.primary}>Aplicar descuento/cupón</Text>
+                  </HStack>
+                  <Box flexDirection="row" alignItems="center" width="100%">
+                    <FormInput
+                      placeholder="Código de descuento"
+                      value={discountCode}
+                      onChangeText={setDiscountCode}
+                      backgroundColor={palette.surface}
+                      textColor={palette.text}
+                      style={{ flex: 1, marginRight: 8 }}
+                    />
+                    <Button size="sm" bg={palette.primary} onPress={handleApplyDiscount}>
+                      <Text color="#fff">Aplicar</Text>
+                    </Button>
+                  </Box>
+                  {discountMessage ? (
+                    <Text color={discountSuccess ? '#43a047' : '#e53935'} mt={2}>{discountMessage}</Text>
+                  ) : null}
+                </Box>
+              </Box>
+            </ScrollView>
+          </Box>
+        </SelectContent>
+      </SelectPortal>
        
   <Box style={{ backgroundColor: palette.surface, marginTop: 8, marginBottom: 8, padding: 0, width: '100%', maxHeight: 340, borderRadius: 16, overflow: 'hidden' }}>
           <FlatList
