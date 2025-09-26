@@ -2,6 +2,7 @@ import React, { useState, useContext, useCallback, useRef } from 'react';
 import { Box, VStack, HStack, Text, Button, FlatList, Popover } from '@gluestack-ui/themed';
 import { Swipeable } from 'react-native-gesture-handler';
 import { TouchableOpacity, View, SafeAreaView, Platform } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { FormInput } from '../components/FormInput';
 import { useAuth } from '../context/AuthContext';
@@ -276,94 +277,101 @@ export default function AgregarProductosScreen({ navigation, route }) {
         </Text>
         {/* Botón para abrir el Sheet */}
         {/* El botón principal ahora será el escáner flotante, se elimina el botón superior */}
-  {/* Modal de búsqueda (sheet), de pago y de otros */}
+        {/* Modal de búsqueda (sheet), de pago y de otros */}
       <SelectPortal isOpen={sheetType === 'search'} onClose={() => setSheetType(null)}>
         <SelectBackdrop onPress={() => setSheetType(null)} />
-        <SelectContent style={{ backgroundColor: palette.surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, width: '100%', maxWidth: '100%', maxHeight: '80%', minHeight: 320, paddingBottom: 24 }}>
-          <SelectDragIndicatorWrapper>
-            <SelectDragIndicator />
-          </SelectDragIndicatorWrapper>
-          <Box style={{ width: '100%', maxWidth: '100%', paddingBottom: 24, position: 'relative' }}>
-            <Box px={8} pt={8} style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2, backgroundColor: palette.surface, paddingBottom: 8 }}>
-              <Text fontSize={18} fontWeight="bold" color={palette.text} mt={2} mb={1}>Buscar por nombre, precio o código</Text>
-              <FormInput
-                placeholder="Buscar producto"
-                value={productQuery}
-                onChangeText={setProductQuery}
-                backgroundColor={palette.input}
-                textColor={palette.text}
-                style={{ width: '100%' }}
-              />
-            </Box>
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400, paddingTop: 80 }}>
-              <Box px={8} pt={16} pb={80}>
-                {filteredProducts.length === 0 ? (
-                  <Text color={palette.text} textAlign="center" mt={4}>No hay productos disponibles.</Text>
-                ) : (
-                  filteredProducts.map(item => (
-                    <Box
-                      key={item.id}
-                      bg="#fff"
-                      shadow={2}
-                      borderRadius={14}
-                      p={12}
-                      mb={3}
-                      flexDirection="row"
-                      alignItems="center"
-                    >
-                      <VStack alignItems="flex-start" flex={1}>
-                        <Text color={palette.text} fontWeight="bold" fontSize={16}>{item.name}</Text>
-                        <Text color={palette.text} fontSize={12}>
-                          Categoría: {
-                            (() => {
-                              const catId = item.category || item.categoria;
-                              if (!catId) return 'Sin categoría';
-                              if (typeof catId === 'object' && catId.name) return catId.name;
-                              const foundCat = categories.find(c => c.id === catId || c.id === Number(catId));
-                              return foundCat ? foundCat.name : `ID: ${catId}`;
-                            })()
-                          }
-                        </Text>
-                        <Text color={palette.text} fontSize={12}>Código de barras: {item.code || 'N/A'}</Text>
-                        <Text color={palette.text} fontSize={12} fontWeight="bold">Precio: ${item.sale_price}</Text>
-                      </VStack>
-                      <Button
-                        size="sm"
-                        bg={palette.primary}
-                        ml={2}
-                        onPress={async () => {
-                          const existing = products.find(p => p.id === item.id);
-                          if (existing) {
-                            setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
-                          } else {
-                            setProducts([...products, { ...item, qty: 1 }]);
-                          }
-                          try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch {}
-                          try {
-                            const { sound } = await Audio.Sound.createAsync(
-                              require('../assets/beep.mp3'),
-                              { shouldPlay: true }
-                            );
-                            sound.setOnPlaybackStatusUpdate(status => {
-                              if (status.didJustFinish) sound.unloadAsync();
-                            });
-                          } catch {}
-                          Toast.show({
-                            type: 'success',
-                            text1: 'Producto agregado',
-                            text2: item.name,
-                          });
-                        }}
-                      >
-                        <Text color="#fff">Agregar</Text>
-                      </Button>
-                    </Box>
-                  ))
-                )}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1, width: '100%', justifyContent: 'flex-end' }}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+
+        >
+          <SelectContent style={{ backgroundColor: palette.surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, width: '100%', minHeight: 320, paddingBottom: 24, flex: 1 }}>
+            <SelectDragIndicatorWrapper>
+              <SelectDragIndicator />
+            </SelectDragIndicatorWrapper>
+            <Box style={{ width: '100%', alignSelf: 'center', paddingBottom: 24, position: 'relative', flex: 1 }}>
+              <Box px={8} pt={8} style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2, backgroundColor: palette.surface, paddingBottom: 8 }}>
+                <Text fontSize={18} fontWeight="bold" color={palette.text} mt={2} mb={1}>Buscar por nombre, precio o código</Text>
+                <FormInput
+                  placeholder="Buscar producto"
+                  value={productQuery}
+                  onChangeText={setProductQuery}
+                  backgroundColor={palette.input}
+                  textColor={palette.text}
+                  style={{ width: '100%' }}
+                />
               </Box>
-            </ScrollView>
-          </Box>
-        </SelectContent>
+              <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, paddingTop: 80, paddingBottom: 100 }}>
+                <Box px={8} pt={16} pb={80}>
+                  {filteredProducts.length === 0 ? (
+                    <Text color={palette.text} textAlign="center" mt={4}>No hay productos disponibles.</Text>
+                  ) : (
+                    filteredProducts.map(item => (
+                      <Box
+                        key={item.id}
+                        bg="#fff"
+                        shadow={2}
+                        borderRadius={14}
+                        p={12}
+                        mb={3}
+                        flexDirection="row"
+                        alignItems="center"
+                      >
+                        <VStack alignItems="flex-start" flex={1}>
+                          <Text color={palette.text} fontWeight="bold" fontSize={16}>{item.name}</Text>
+                          <Text color={palette.text} fontSize={12}>
+                            Categoría: {
+                              (() => {
+                                const catId = item.category || item.categoria;
+                                if (!catId) return 'Sin categoría';
+                                if (typeof catId === 'object' && catId.name) return catId.name;
+                                const foundCat = categories.find(c => c.id === catId || c.id === Number(catId));
+                                return foundCat ? foundCat.name : `ID: ${catId}`;
+                              })()
+                            }
+                          </Text>
+                          <Text color={palette.text} fontSize={12}>Código de barras: {item.code || 'N/A'}</Text>
+                          <Text color={palette.text} fontSize={12} fontWeight="bold">Precio: ${item.sale_price}</Text>
+                        </VStack>
+                        <Button
+                          size="sm"
+                          bg={palette.primary}
+                          ml={2}
+                          onPress={async () => {
+                            const existing = products.find(p => p.id === item.id);
+                            if (existing) {
+                              setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+                            } else {
+                              setProducts([...products, { ...item, qty: 1 }]);
+                            }
+                            try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch {}
+                            try {
+                              const { sound } = await Audio.Sound.createAsync(
+                                require('../assets/beep.mp3'),
+                                { shouldPlay: true }
+                              );
+                              sound.setOnPlaybackStatusUpdate(status => {
+                                if (status.didJustFinish) sound.unloadAsync();
+                              });
+                            } catch {}
+                            Toast.show({
+                              type: 'success',
+                              text1: 'Producto agregado',
+                              text2: item.name,
+                            });
+                          }}
+                        >
+                          <Text color="#fff">Agregar</Text>
+                        </Button>
+                      </Box>
+                    ))
+                  )}
+                </Box>
+              </ScrollView>
+            </Box>
+          </SelectContent>
+        </KeyboardAvoidingView>
       </SelectPortal>
       {/* Modal de pago sigue igual (puedes agregar aquí otro contenido si lo necesitas) */}
       {sheetType === 'pago' && (
@@ -427,6 +435,8 @@ export default function AgregarProductosScreen({ navigation, route }) {
           </Box>
         </SelectContent>
       </SelectPortal>
+  
+  
        
   <Box style={{ backgroundColor: palette.surface, marginTop: 8, marginBottom: 8, padding: 0, width: '100%', maxHeight: 340, borderRadius: 16, overflow: 'hidden' }}>
           <FlatList
