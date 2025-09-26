@@ -1,5 +1,6 @@
 import React, { useState, useContext, useCallback, useRef } from 'react';
 import { Box, VStack, HStack, Text, Button, FlatList, Popover } from '@gluestack-ui/themed';
+import { Swipeable } from 'react-native-gesture-handler';
 import { TouchableOpacity, View, SafeAreaView, Platform } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { FormInput } from '../components/FormInput';
@@ -411,134 +412,157 @@ export default function AgregarProductosScreen({ navigation, route }) {
             keyExtractor={item => item.id?.toString()}
             ListEmptyComponent={<Text color={palette.text} textAlign="center" m={3}>No hay productos agregados.</Text>}
             renderItem={({ item, index }) => (
-              <Box
+              <Swipeable
                 key={item.id}
-                flexDirection="row"
-                alignItems="center"
-                bg="#fff"
-                shadow={2}
-                borderRadius={16}
-                py={14}
-                mb={3}
-                mx={2}
-                width="100%"
-                p={12}
-                style={{ alignSelf: 'center' }}
+                renderLeftActions={() => (
+                  <Box justifyContent="center" alignItems="flex-start" bg="#ffebee" height="100%" pl={4}>
+                    <MaterialIcons name={item.qty > 1 ? "remove" : "delete"} size={28} color="#e53935" />
+                  </Box>
+                )}
+                renderRightActions={() => (
+                  <Box justifyContent="center" alignItems="flex-end" bg="#e0f7fa" height="100%" pr={4}>
+                    <MaterialIcons name="add" size={28} color="#43a047" />
+                  </Box>
+                )}
+                onSwipeableLeftOpen={() => {
+                  if (item.qty > 1) {
+                    setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
+                  } else {
+                    setProducts(products.filter(p => p.id !== item.id));
+                  }
+                }}
+                onSwipeableRightOpen={() => {
+                  setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+                }}
               >
-                {/* Sin imagen, solo info */}
-                {/* Info principal */}
-                <Box flex={1} justifyContent="center" ml={4}>
-                  <Text color={palette.text} fontWeight="bold" fontSize={16} mb={1}>
-                    {item.name || item.nombre || item.first_name || 'Sin nombre'}
-                  </Text>
-                  <Text color={palette.textSecondary} fontSize={13} mb={1}>
-                    {
-                      (() => {
-                        // Buscar el nombre de la categoría por id
-                        const catId = item.category || item.categoria;
-                        if (!catId) return 'Sin categoría';
-                        if (typeof catId === 'object' && catId.name) return catId.name;
-                        const foundCat = categories.find(c => c.id === catId || c.id === Number(catId));
-                        return foundCat ? foundCat.name : `Categoría: ${catId}`;
-                      })()
-                    }
-                  </Text>
-                  <Text color={palette.textSecondary} fontSize={12}>
-                    Código: {item.code || item.codigo || item.id}
-                  </Text>
-                </Box>
-                {/* Controles y precio: cantidad y precio uno debajo del otro, centrados */}
-                <Box alignItems="center" justifyContent="center" minWidth={100}>
-                  <Box flexDirection="column" alignItems="center" justifyContent="center">
-                    <Box flexDirection="row" alignItems="center" mb={2}>
-                      {item.qty > 1 ? (
+                <Box
+                  flexDirection="row"
+                  alignItems="center"
+                  bg="#fff"
+                  shadow={2}
+                  borderRadius={16}
+                  py={14}
+                  mb={3}
+                  mx={2}
+                  width="100%"
+                  p={12}
+                  style={{ alignSelf: 'center' }}
+                >
+                  {/* Sin imagen, solo info */}
+                  {/* Info principal */}
+                  <Box flex={1} justifyContent="center" ml={4}>
+                    <Text color={palette.text} fontWeight="bold" fontSize={16} mb={1}>
+                      {item.name || item.nombre || item.first_name || 'Sin nombre'}
+                    </Text>
+                    <Text color={palette.textSecondary} fontSize={13} mb={1}>
+                      {
+                        (() => {
+                          // Buscar el nombre de la categoría por id
+                          const catId = item.category || item.categoria;
+                          if (!catId) return 'Sin categoría';
+                          if (typeof catId === 'object' && catId.name) return catId.name;
+                          const foundCat = categories.find(c => c.id === catId || c.id === Number(catId));
+                          return foundCat ? foundCat.name : `Categoría: ${catId}`;
+                        })()
+                      }
+                    </Text>
+                    <Text color={palette.textSecondary} fontSize={12}>
+                      Código: {item.code || item.codigo || item.id}
+                    </Text>
+                  </Box>
+                  {/* Controles y precio: cantidad y precio uno debajo del otro, centrados */}
+                  <Box alignItems="center" justifyContent="center" minWidth={100}>
+                    <Box flexDirection="column" alignItems="center" justifyContent="center">
+                      <Box flexDirection="row" alignItems="center" mb={2}>
+                        {item.qty > 1 ? (
+                          <TouchableOpacity onPress={() => {
+                            setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
+                          }} style={{ paddingHorizontal: 6 }}>
+                            <MaterialIcons name="remove-circle-outline" size={22} color="#e53935" />
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity onPress={() => setProducts(products.filter(p => p.id !== item.id))} style={{ paddingHorizontal: 6 }}>
+                            <MaterialIcons name="delete" size={22} color="#e53935" />
+                          </TouchableOpacity>
+                        )}
+                        <FormInput
+                          value={item.qty === 0 ? '' : String(item.qty)}
+                          onChangeText={v => {
+                            if (!window.qtyTimeouts) window.qtyTimeouts = {};
+                            // Limpiar timeout anterior
+                            if (window.qtyTimeouts[item.id]) clearTimeout(window.qtyTimeouts[item.id]);
+                            if (v === '' || v === '0') {
+                              setProducts(products.map(p => p.id === item.id ? { ...p, qty: 0 } : p));
+                              // Colocar 1 después de 1 segundo si sigue vacío
+                              window.qtyTimeouts[item.id] = setTimeout(() => {
+                                setProducts(products => products.map(p => p.id === item.id ? { ...p, qty: 1 } : p));
+                              }, 1000);
+                              return;
+                            }
+                            const val = Math.max(1, parseInt(v.replace(/[^0-9]/g, '')) || 1);
+                            setProducts(products.map(p => p.id === item.id ? { ...p, qty: val } : p));
+                          }}
+                          keyboardType="numeric"
+                          style={{ minWidth: 48, maxWidth: 70, height: 22, textAlign: 'center', fontWeight: 'bold', fontSize: 15, paddingVertical: 0, paddingHorizontal: 0, borderRadius: 8, textAlignVertical: 'center' }}
+                          backgroundColor={palette.input}
+                          textColor={palette.text}
+                        />
                         <TouchableOpacity onPress={() => {
-                          setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
+                          setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
                         }} style={{ paddingHorizontal: 6 }}>
-                          <MaterialIcons name="remove-circle-outline" size={22} color="#e53935" />
+                          <MaterialIcons name="add-circle-outline" size={22} color="#43a047" />
                         </TouchableOpacity>
-                      ) : (
-                        <TouchableOpacity onPress={() => setProducts(products.filter(p => p.id !== item.id))} style={{ paddingHorizontal: 6 }}>
-                          <MaterialIcons name="delete" size={22} color="#e53935" />
-                        </TouchableOpacity>
-                      )}
-                      <FormInput
-                        value={item.qty === 0 ? '' : String(item.qty)}
-                        onChangeText={v => {
-                          if (!window.qtyTimeouts) window.qtyTimeouts = {};
-                          // Limpiar timeout anterior
-                          if (window.qtyTimeouts[item.id]) clearTimeout(window.qtyTimeouts[item.id]);
-                          if (v === '' || v === '0') {
-                            setProducts(products.map(p => p.id === item.id ? { ...p, qty: 0 } : p));
-                            // Colocar 1 después de 1 segundo si sigue vacío
-                            window.qtyTimeouts[item.id] = setTimeout(() => {
-                              setProducts(products => products.map(p => p.id === item.id ? { ...p, qty: 1 } : p));
-                            }, 1000);
-                            return;
-                          }
-                          const val = Math.max(1, parseInt(v.replace(/[^0-9]/g, '')) || 1);
-                          setProducts(products.map(p => p.id === item.id ? { ...p, qty: val } : p));
-                        }}
-                        keyboardType="numeric"
-                        style={{ minWidth: 48, maxWidth: 70, height: 22, textAlign: 'center', fontWeight: 'bold', fontSize: 15, paddingVertical: 0, paddingHorizontal: 0, borderRadius: 8, textAlignVertical: 'center' }}
-                        backgroundColor={palette.input}
-                        textColor={palette.text}
-                      />
-                      <TouchableOpacity onPress={() => {
-                        setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
-                      }} style={{ paddingHorizontal: 6 }}>
-                        <MaterialIcons name="add-circle-outline" size={22} color="#43a047" />
-                      </TouchableOpacity>
+                      </Box>
+                      <Popover
+                        isOpen={openPopoverIndex === index}
+                        onOpen={() => setOpenPopoverIndex(index)}
+                        onClose={() => setOpenPopoverIndex(null)}
+                        trigger={triggerProps => (
+                          <TouchableOpacity
+                            {...triggerProps}
+                            style={{ alignItems: 'center', marginTop: 8 }}
+                            onPress={() => setOpenPopoverIndex(openPopoverIndex === index ? null : index)}
+                          >
+                            <Text color={palette.text} fontWeight="bold" fontSize={18} textAlign="center">
+                              ${(item.sale_price * item.qty).toFixed(2)} USD
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      >
+                        <Popover.Content style={{ minWidth: 180, padding: 12 }}>
+                          <Popover.Arrow />
+                          <Popover.Header style={{ width: '100%', textAlign: 'center' }}>
+                            <Text color={palette.text} fontWeight="bold" fontSize={16} textAlign="center">Precios en otras monedas</Text>
+                          </Popover.Header>
+                          <Popover.Body style={{ width: '100%' }}>
+                            {(() => {
+                              const priceUSD = (item.sale_price * item.qty).toFixed(2);
+                              const usdToEur = 0.92;
+                              const usdToCop = 4000;
+                              const priceEUR = (item.sale_price * usdToEur * item.qty).toFixed(2);
+                              const priceCOP = (item.sale_price * usdToCop * item.qty).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+                              // Unitario
+                              const unitUSD = Number(item.sale_price).toFixed(2);
+                              const unitEUR = (Number(item.sale_price) * usdToEur).toFixed(2);
+                              const unitCOP = (Number(item.sale_price) * usdToCop).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+                              return (
+                                <>
+                                  <Text color={palette.text} fontWeight="bold" fontSize={15} mb={1} textAlign="center">Precio unitario:</Text>
+                                  <Text color={palette.text} fontSize={15} mb={1} textAlign="center">${unitUSD} USD | €{unitEUR} EUR | {unitCOP} COP</Text>
+                                  <Text color={palette.text} fontWeight="bold" fontSize={15} mt={2} mb={1} textAlign="center">Total:</Text>
+                                  <Text color={palette.text} fontSize={16} mb={2} textAlign="center">${priceUSD} USD</Text>
+                                  <Text color={palette.textSecondary} fontSize={15} mb={2} textAlign="center">€{priceEUR} EUR</Text>
+                                  <Text color={palette.textSecondary} fontSize={15} textAlign="center">{priceCOP} COP</Text>
+                                </>
+                              );
+                            })()}
+                          </Popover.Body>
+                        </Popover.Content>
+                      </Popover>
                     </Box>
-                    <Popover
-                      isOpen={openPopoverIndex === index}
-                      onOpen={() => setOpenPopoverIndex(index)}
-                      onClose={() => setOpenPopoverIndex(null)}
-                      trigger={triggerProps => (
-                        <TouchableOpacity
-                          {...triggerProps}
-                          style={{ alignItems: 'center', marginTop: 8 }}
-                          onPress={() => setOpenPopoverIndex(openPopoverIndex === index ? null : index)}
-                        >
-                          <Text color={palette.text} fontWeight="bold" fontSize={18} textAlign="center">
-                            ${(item.sale_price * item.qty).toFixed(2)} USD
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    >
-                      <Popover.Content style={{ minWidth: 180, padding: 12 }}>
-                        <Popover.Arrow />
-                        <Popover.Header style={{ width: '100%', textAlign: 'center' }}>
-                          <Text color={palette.text} fontWeight="bold" fontSize={16} textAlign="center">Precios en otras monedas</Text>
-                        </Popover.Header>
-                        <Popover.Body style={{ width: '100%' }}>
-                          {(() => {
-                            const priceUSD = (item.sale_price * item.qty).toFixed(2);
-                            const usdToEur = 0.92;
-                            const usdToCop = 4000;
-                            const priceEUR = (item.sale_price * usdToEur * item.qty).toFixed(2);
-                            const priceCOP = (item.sale_price * usdToCop * item.qty).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-                            // Unitario
-                            const unitUSD = Number(item.sale_price).toFixed(2);
-                            const unitEUR = (Number(item.sale_price) * usdToEur).toFixed(2);
-                            const unitCOP = (Number(item.sale_price) * usdToCop).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-                            return (
-                              <>
-                                <Text color={palette.text} fontWeight="bold" fontSize={15} mb={1} textAlign="center">Precio unitario:</Text>
-                                <Text color={palette.text} fontSize={15} mb={1} textAlign="center">${unitUSD} USD | €{unitEUR} EUR | {unitCOP} COP</Text>
-                                <Text color={palette.text} fontWeight="bold" fontSize={15} mt={2} mb={1} textAlign="center">Total:</Text>
-                                <Text color={palette.text} fontSize={16} mb={2} textAlign="center">${priceUSD} USD</Text>
-                                <Text color={palette.textSecondary} fontSize={15} mb={2} textAlign="center">€{priceEUR} EUR</Text>
-                                <Text color={palette.textSecondary} fontSize={15} textAlign="center">{priceCOP} COP</Text>
-                              </>
-                            );
-                          })()}
-                        </Popover.Body>
-                      </Popover.Content>
-                    </Popover>
                   </Box>
                 </Box>
-              </Box>
+              </Swipeable>
             )}
             showsVerticalScrollIndicator={true}
             style={{ width: '100%' }}
