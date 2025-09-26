@@ -383,13 +383,13 @@ export default function AgregarProductosScreen({ navigation, route }) {
           )}
         </View>
       </Modal>
-        {/* Lista de productos seleccionados para la venta */}
-        <Text fontSize={18} fontWeight="bold" color={palette.text} mt={4} mb={1}>Carrito</Text>
-  <Box style={{ backgroundColor: palette.surface, marginTop: 8, marginBottom: 8, padding: 0, overflow: 'visible' }}>
-          {products.length === 0 ? (
-            <Text color={palette.text} textAlign="center" m={3}>No hay productos agregados.</Text>
-          ) : (
-            products.map((item, idx) => (
+       
+  <Box style={{ backgroundColor: palette.surface, marginTop: 8, marginBottom: 8, padding: 0, width: '100%', maxHeight: 340, borderRadius: 16, overflow: 'hidden' }}>
+          <FlatList
+            data={products}
+            keyExtractor={item => item.id?.toString()}
+            ListEmptyComponent={<Text color={palette.text} textAlign="center" m={3}>No hay productos agregados.</Text>}
+            renderItem={({ item, index }) => (
               <Box
                 key={item.id}
                 flexDirection="row"
@@ -470,14 +470,14 @@ export default function AgregarProductosScreen({ navigation, route }) {
                       </TouchableOpacity>
                     </Box>
                     <Popover
-                      isOpen={openPopoverIndex === idx}
-                      onOpen={() => setOpenPopoverIndex(idx)}
+                      isOpen={openPopoverIndex === index}
+                      onOpen={() => setOpenPopoverIndex(index)}
                       onClose={() => setOpenPopoverIndex(null)}
                       trigger={triggerProps => (
                         <TouchableOpacity
                           {...triggerProps}
                           style={{ alignItems: 'center', marginTop: 8 }}
-                          onPress={() => setOpenPopoverIndex(openPopoverIndex === idx ? null : idx)}
+                          onPress={() => setOpenPopoverIndex(openPopoverIndex === index ? null : index)}
                         >
                           <Text color={palette.text} fontWeight="bold" fontSize={18} textAlign="center">
                             ${(item.sale_price * item.qty).toFixed(2)} USD
@@ -518,8 +518,11 @@ export default function AgregarProductosScreen({ navigation, route }) {
                   </Box>
                 </Box>
               </Box>
-            ))
-          )}
+            )}
+            showsVerticalScrollIndicator={true}
+            style={{ width: '100%' }}
+            contentContainerStyle={{ width: '100%' }}
+          />
         </Box>
         {/* Recuento de items en el carrito */}
         {/* Resumen y botón de checkout */}
