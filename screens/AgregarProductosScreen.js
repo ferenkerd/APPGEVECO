@@ -283,32 +283,54 @@ export default function AgregarProductosScreen({ navigation, route }) {
           <SelectDragIndicatorWrapper>
             <SelectDragIndicator />
           </SelectDragIndicatorWrapper>
-          <Box style={{ width: '100%', maxWidth: '100%', paddingBottom: 24 }}>
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
-              <Box px={8} pt={8}>
-                <Text fontSize={18} fontWeight="bold" color={palette.text} mt={2} mb={1}>Buscar por nombre, precio o código</Text>
-                <FormInput
-                  placeholder="Buscar producto"
-                  value={productQuery}
-                  onChangeText={setProductQuery}
-                  backgroundColor={palette.input}
-                  textColor={palette.text}
-                  style={{ width: '100%' }}
-                />
+          <Box style={{ width: '100%', maxWidth: '100%', paddingBottom: 24, position: 'relative' }}>
+            <Box px={8} pt={8} style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2, backgroundColor: palette.surface, paddingBottom: 8 }}>
+              <Text fontSize={18} fontWeight="bold" color={palette.text} mt={2} mb={1}>Buscar por nombre, precio o código</Text>
+              <FormInput
+                placeholder="Buscar producto"
+                value={productQuery}
+                onChangeText={setProductQuery}
+                backgroundColor={palette.input}
+                textColor={palette.text}
+                style={{ width: '100%' }}
+              />
+            </Box>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400, paddingTop: 80 }}>
+              <Box px={8} pt={16} pb={80}>
                 {filteredProducts.length === 0 ? (
                   <Text color={palette.text} textAlign="center" mt={4}>No hay productos disponibles.</Text>
                 ) : (
                   filteredProducts.map(item => (
-                    <HStack key={item.id} justifyContent="space-between" alignItems="center" bg={palette.input} p={2} borderRadius={6} mb={2}>
+                    <Box
+                      key={item.id}
+                      bg="#fff"
+                      shadow={2}
+                      borderRadius={14}
+                      p={12}
+                      mb={3}
+                      flexDirection="row"
+                      alignItems="center"
+                    >
                       <VStack alignItems="flex-start" flex={1}>
-                        <Text color={palette.text} fontWeight="bold">{item.name}</Text>
-                        <Text color={palette.text} fontSize={12}>Código: {item.id}</Text>
+                        <Text color={palette.text} fontWeight="bold" fontSize={16}>{item.name}</Text>
+                        <Text color={palette.text} fontSize={12}>
+                          Categoría: {
+                            (() => {
+                              const catId = item.category || item.categoria;
+                              if (!catId) return 'Sin categoría';
+                              if (typeof catId === 'object' && catId.name) return catId.name;
+                              const foundCat = categories.find(c => c.id === catId || c.id === Number(catId));
+                              return foundCat ? foundCat.name : `ID: ${catId}`;
+                            })()
+                          }
+                        </Text>
                         <Text color={palette.text} fontSize={12}>Código de barras: {item.code || 'N/A'}</Text>
-                        <Text color={palette.text} fontSize={12}>Precio: ${item.sale_price}</Text>
+                        <Text color={palette.text} fontSize={12} fontWeight="bold">Precio: ${item.sale_price}</Text>
                       </VStack>
                       <Button
                         size="sm"
                         bg={palette.primary}
+                        ml={2}
                         onPress={async () => {
                           const existing = products.find(p => p.id === item.id);
                           if (existing) {
@@ -335,7 +357,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
                       >
                         <Text color="#fff">Agregar</Text>
                       </Button>
-                    </HStack>
+                    </Box>
                   ))
                 )}
               </Box>
