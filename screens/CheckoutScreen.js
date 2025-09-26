@@ -230,8 +230,8 @@ export default function CheckoutScreen() {
               <Text color="#fff" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Procesando...' : 'Confirmar y Cobrar'}</Text>
             </Button>
           )}
-          {/* Solo admin y modo admin pueden crear orden pendiente */}
-          {user?.user?.job_position === 2 && paymentMode === 'admin' && (
+          {/* Cajero en modo admin: solo puede enviar operación al admin */}
+          {user?.user?.job_position === 4 && paymentMode === 'admin' && (
             <Button
               bg="#f7b731"
               isDisabled={loading}
@@ -239,7 +239,7 @@ export default function CheckoutScreen() {
               borderRadius={8}
               style={{ paddingVertical: 12, minHeight: 44, marginTop: 12, width: '100%', elevation: 2 }}
             >
-              <Text color="#222" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>Crear Orden Pendiente</Text>
+              <Text color="#222" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Enviando...' : 'Enviar operación'}</Text>
             </Button>
           )}
           <Button

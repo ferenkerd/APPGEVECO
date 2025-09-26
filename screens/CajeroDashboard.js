@@ -45,7 +45,9 @@ function DashboardScreen({ navigation }) {
     <>
 
       <AppHeader />
-      <Box flex={1} bg="transparent" borderWidth={0} />
+        <Box flex={1} bg="transparent" borderWidth={0}>
+          <TabHeader title="Inicio de caja" showMenu />
+        </Box>
     </>
   );
 }

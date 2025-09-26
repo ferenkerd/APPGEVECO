@@ -96,7 +96,7 @@ export default function AlmacenistaDashboardTabs() {
           tabBarLabel: 'Inventario',
           title: 'Inventario',
           headerShown: true,
-          header: () => <TabHeader title="Inventario" />,
+            header: () => <TabHeader title="Inventario" showMenu={false} />,
         }}
       />
       <Tab.Screen

@@ -28,6 +28,7 @@ import CheckoutScreen from './screens/CheckoutScreen';
 import ResumenVentaScreen from './screens/ResumenVentaScreen';
 import DetalleVentaScreen from './screens/DetalleVentaScreen';
 import ToastTestScreen from './screens/ToastTestScreen';
+import TipoCobroScreen from './screens/TipoCobroScreen';
 import { ActivityIndicator, View, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -80,6 +81,7 @@ function AppNavigator() {
       <Stack.Screen name="AdministradorDashboard" component={AdministradorDashboard} options={{ headerShown: false }} />
   <Stack.Screen name="ToastTest" component={ToastTestScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DetalleVenta" component={DetalleVentaScreen} options={{ title: 'Detalle de Venta', headerShown: true, presentation: 'card' }} />
+      <Stack.Screen name="TipoCobro" component={TipoCobroScreen} options={{ title: 'Tipo de cobro', headerShown: false }} />
     </Stack.Navigator>
   );
 }

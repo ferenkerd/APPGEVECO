@@ -8,29 +8,24 @@ import { ColorModeContext } from '../context/ColorModeContext';
 import { getPalette } from '../styles/theme';
 import { Box, Text } from '@gluestack-ui/themed';
 
+
 function AdminInicioScreen() {
   return (
-    <Box flex={1} alignItems="center" justifyContent="center">
-      <Text fontSize={22} fontWeight="bold">Administrador Dashboard</Text>
-    </Box>
+    <>
+      <AppHeader />
+      <Box flex={1} alignItems="center" justifyContent="center">
+        <Text fontSize={22} fontWeight="bold">Administrador Dashboard</Text>
+      </Box>
+    </>
   );
 }
 
-function AdminUsuariosScreen() {
-  return (
-    <Box flex={1} alignItems="center" justifyContent="center">
-      <Text fontSize={22} fontWeight="bold">Gestión de Usuarios</Text>
-    </Box>
-  );
-}
 
-function AdminReportesScreen() {
-  return (
-    <Box flex={1} alignItems="center" justifyContent="center">
-      <Text fontSize={22} fontWeight="bold">Reportes</Text>
-    </Box>
-  );
-}
+
+import OrdenesPendientesScreen from './OrdenesPendientesScreen';
+
+
+import AdminOtrosScreen from './AdminOtrosScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -50,9 +45,9 @@ export default function AdministradorDashboardTabs() {
         headerShown: false,
       }}
     >
-      <Tab.Screen name="AdminInicio" component={AdminInicioScreen} options={{ tabBarLabel: 'Inicio', title: 'Inicio' }} />
-      <Tab.Screen name="AdminUsuarios" component={AdminUsuariosScreen} options={{ tabBarLabel: 'Usuarios', title: 'Usuarios', headerShown: true, header: () => <TabHeader title="Usuarios" /> }} />
-      <Tab.Screen name="AdminReportes" component={AdminReportesScreen} options={{ tabBarLabel: 'Reportes', title: 'Reportes', headerShown: true, header: () => <TabHeader title="Reportes" /> }} />
+  <Tab.Screen name="AdminInicio" component={AdminInicioScreen} options={{ tabBarLabel: 'Inicio', title: 'Inicio' }} />
+  <Tab.Screen name="AdminOrdenesPendientes" component={OrdenesPendientesScreen} options={{ tabBarLabel: 'Órdenes pendientes', title: 'Órdenes pendientes' }} />
+  <Tab.Screen name="AdminOtros" component={AdminOtrosScreen} options={{ tabBarLabel: 'Otros', title: 'Otros' }} />
     </Tab.Navigator>
   );
 }

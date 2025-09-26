@@ -37,7 +37,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
         }}
       >
         {state.routes.map((route, index) => {
-          if (!['Dashboard', 'IniciarCompra', 'HistorialOperaciones'].includes(route.name)) return null;
+          // Detectar los tabs por nombre para cajero o admin
           const { options } = descriptors[route.key];
           const label =
             options.tabBarLabel !== undefined
@@ -46,6 +46,8 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
               ? options.title
               : route.name;
           const isFocused = state.index === index;
+
+          // Cajero: IniciarCompra (botón flotante)
           if (route.name === 'IniciarCompra') {
             return (
               <View key={route.key} style={{ flex: 1, alignItems: 'center', top: -24 }}>
@@ -82,8 +84,13 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
               </View>
             );
           }
+
+          // Admin: Órdenes pendientes, Otros, Inicio
           let iconName = 'home';
           if (route.name === 'HistorialOperaciones') iconName = 'history';
+          if (route.name === 'AdminOrdenesPendientes') iconName = 'pending-actions';
+          if (route.name === 'AdminOtros') iconName = 'menu';
+
           return (
             <TouchableOpacity
               key={route.key}
