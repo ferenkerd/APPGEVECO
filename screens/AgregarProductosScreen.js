@@ -9,6 +9,7 @@ import { getPalette } from '../styles/theme';
 import BarcodeScannerButton from '../components/BarcodeScannerButton';
 import Toast from 'react-native-toast-message';
 import * as Haptics from 'expo-haptics';
+import { Audio } from 'expo-av';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import CategoryList from '../components/CategoryList';
 import { Modal, Animated, Dimensions, TouchableWithoutFeedback, PanResponder } from 'react-native';
@@ -320,13 +321,29 @@ export default function AgregarProductosScreen({ navigation, route }) {
                     <Button
                       size="sm"
                       bg={palette.primary}
-                      onPress={() => {
+                      onPress={async () => {
                         const existing = products.find(p => p.id === item.id);
                         if (existing) {
                           setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
                         } else {
                           setProducts([...products, { ...item, qty: 1 }]);
                         }
+                        try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch {}
+                        try {
+                          const { sound } = await Audio.Sound.createAsync(
+                            require('../assets/beep.mp3'),
+                            { shouldPlay: true }
+                          );
+                          // Liberar el recurso después de reproducir
+                          sound.setOnPlaybackStatusUpdate(status => {
+                            if (status.didJustFinish) sound.unloadAsync();
+                          });
+                        } catch {}
+                        Toast.show({
+                          type: 'success',
+                          text1: 'Producto agregado',
+                          text2: item.name,
+                        });
                       }}
                     >
                       <Text color="#fff">Agregar</Text>
