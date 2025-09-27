@@ -1,5 +1,5 @@
 import React, { useState, useContext, useCallback, useRef } from 'react';
-import { Box, VStack, HStack, Text, Button, FlatList, Popover } from '@gluestack-ui/themed';
+import { Box, VStack, HStack, Text, Button, FlatList, Popover, Switch } from '@gluestack-ui/themed';
 import { Swipeable } from 'react-native-gesture-handler';
 import { TouchableOpacity, View, SafeAreaView, Platform } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native';
@@ -14,12 +14,18 @@ import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import CategoryList from '../components/CategoryList';
+
+// AgregarProductosScreen debe ser un componente funcional
 import { Modal, Animated, Dimensions, TouchableWithoutFeedback, PanResponder, ScrollView } from 'react-native';
 import { SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator } from '@gluestack-ui/themed';
 import { apiFetch } from '../services/api';
 
 // AgregarProductosScreen debe ser un componente funcional
 export default function AgregarProductosScreen({ navigation, route }) {
+  // Estado para activar/desactivar los botones pequeños de suma/resta
+  const [buttonsEnabled, setButtonsEnabled] = useState(true);
+  // Estado para activar/desactivar swipe
+  const [swipeEnabled, setSwipeEnabled] = useState(true);
   const [openPopoverIndex, setOpenPopoverIndex] = useState(null);
   const [isPressingPay, setIsPressingPay] = useState(false);
   const [pressCountPay, setPressCountPay] = useState(3);
@@ -131,6 +137,8 @@ export default function AgregarProductosScreen({ navigation, route }) {
   }, [user]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
+  // Configuración del escáner: 'cerrar' o 'continuar'
+  const [scannerMode, setScannerMode] = useState('cerrar');
   const [sheetOpen, setSheetOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const windowHeight = Dimensions.get('window').height;
@@ -284,7 +292,6 @@ export default function AgregarProductosScreen({ navigation, route }) {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1, width: '100%', justifyContent: 'flex-end' }}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-
         >
           <SelectContent style={{ backgroundColor: palette.surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, width: '100%', minHeight: 320, paddingBottom: 24, flex: 1 }}>
             <SelectDragIndicatorWrapper>
@@ -381,7 +388,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
       )}
 
       {/* Sheet de Otros (all) con información del cliente y cupón */}
-      <SelectPortal isOpen={sheetType === 'all'} onClose={() => setSheetType(null)}>
+  <SelectPortal isOpen={sheetType === 'all'} onClose={() => setSheetType(null)}>
         <SelectBackdrop onPress={() => setSheetType(null)} />
         <SelectContent style={{ backgroundColor: palette.surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, width: '100%', maxWidth: '100%', maxHeight: '80%', minHeight: 320, paddingBottom: 24 }}>
           <SelectDragIndicatorWrapper>
@@ -392,21 +399,92 @@ export default function AgregarProductosScreen({ navigation, route }) {
               <Box px={8} pt={8}>
                 <Text fontSize={18} fontWeight="bold" color={palette.text} mt={2} mb={1}>Opciones adicionales</Text>
                 {client && (
-                  <Box bg={palette.card} borderRadius={14} p={18} alignItems="flex-start" shadow={2} mt={2} mb={2}>
+                  <Box bg={palette.card} borderRadius={14} p={18} alignItems="flex-start" shadow={2} mt={2} mb={2} width="100%">
                     <HStack alignItems="center" mb={3}>
                       <MaterialIcons name="person" size={32} color={palette.primary} style={{ marginRight: 10 }} />
                       <Text fontSize={20} fontWeight="bold" color={palette.primary}>Información del cliente</Text>
                     </HStack>
-                    <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Nombre:</Text> {client.first_name || client.nombre || 'N/A'}</Text>
-                    <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">ID:</Text> {client.id || 'N/A'}</Text>
-                    {client.email && (
-                      <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Email:</Text> {client.email}</Text>
-                    )}
-                    {client.phone && (
-                      <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Teléfono:</Text> {client.phone}</Text>
-                    )}
+                    <HStack width="100%" justifyContent="space-between">
+                      <VStack flex={1} mr={2}>
+                        <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Nombre:</Text> {client.first_name || client.nombre || 'N/A'}</Text>
+                        <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Apellido:</Text> {client.last_name || client.apellido || 'N/A'}</Text>
+                        {/* <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">ID:</Text> {client.id || 'N/A'}</Text> */}
+                        <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Cédula:</Text> {client.identity_card || client.cedula || 'N/A'}</Text>
+                        {client.email && (
+                          <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Email:</Text> {client.email}</Text>
+                        )}
+                      </VStack>
+                      <VStack flex={1} ml={2}>
+                        <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Teléfono:</Text> {client.prefix && client.prefix.code ? client.prefix.code : ''}{client.contact_phone || client.phone || client.telefono || 'N/A'}</Text>
+                        {client.address && (
+                          <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Dirección:</Text> {client.address}</Text>
+                        )}
+                        {client.city && (
+                          <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">Ciudad:</Text> {client.city}</Text>
+                        )}
+                        {client.rfc && (
+                          <Text color={palette.text} fontSize={17} mb={1}><Text fontWeight="bold">RFC:</Text> {client.rfc}</Text>
+                        )}
+                      </VStack>
+                    </HStack>
                   </Box>
                 )}
+                {/* Card visual para activar/desactivar swipe y botones */}
+                <Box bg={palette.card} borderRadius={14} p={18} alignItems="flex-start" shadow={2} mt={2} mb={2} width="100%">
+                  <HStack alignItems="center" mb={3}>
+                    <MaterialIcons name="swap-horiz" size={28} color={palette.primary} style={{ marginRight: 10 }} />
+                    <Text fontSize={18} fontWeight="bold" color={palette.primary}>Controles de productos</Text>
+                  </HStack>
+                  <HStack alignItems="center" width="100%" justifyContent="space-between" mb={2}>
+                    <Text color={palette.text} fontSize={15}>Deslizar para sumar/restar</Text>
+                    <Box flex={1} alignItems="center">
+                      <Switch
+                        value={swipeEnabled}
+                        onValueChange={setSwipeEnabled}
+                        size="md"
+                        trackColor={{ true: palette.primary, false: '#ccc' }}
+                        thumbColor={swipeEnabled ? palette.primary : '#fff'}
+                      />
+                    </Box>
+                    <Text color={palette.text} fontSize={15}>{swipeEnabled ? 'Activo' : 'Inactivo'}</Text>
+                  </HStack>
+                  <HStack alignItems="center" width="100%" justifyContent="space-between">
+                    <Text color={palette.text} fontSize={15}>Botones pequeños de suma/resta</Text>
+                    <Box flex={1} alignItems="center">
+                      <Switch
+                        value={buttonsEnabled}
+                        onValueChange={setButtonsEnabled}
+                        size="md"
+                        trackColor={{ true: palette.primary, false: '#ccc' }}
+                        thumbColor={buttonsEnabled ? palette.primary : '#fff'}
+                      />
+                    </Box>
+                    <Text color={palette.text} fontSize={15}>{buttonsEnabled ? 'Activo' : 'Inactivo'}</Text>
+                  </HStack>
+                </Box>
+                <Box bg={palette.card} borderRadius={14} p={18} alignItems="flex-start" shadow={2} mt={2} mb={2} width="100%">
+                  <HStack alignItems="center" mb={3}>
+                    <MaterialIcons name="settings" size={28} color={palette.primary} style={{ marginRight: 10 }} />
+                    <Text fontSize={18} fontWeight="bold" color={palette.primary}>Configuración del escáner</Text>
+                  </HStack>
+                  <HStack alignItems="center" width="100%" justifyContent="space-between">
+                    <Text color={palette.text} fontSize={15} mb={2}>
+                      Cerrar al añadir
+                    </Text>
+                    <Box flex={1} alignItems="center">
+                      <Switch
+                        value={scannerMode === 'continuar'}
+                        onValueChange={v => setScannerMode(v ? 'continuar' : 'cerrar')}
+                        size="md"
+                        trackColor={{ true: palette.primary, false: '#ccc' }}
+                        thumbColor={scannerMode === 'continuar' ? palette.primary : '#fff'}
+                      />
+                    </Box>
+                    <Text color={palette.text} fontSize={15} mb={2}>
+                      Continuar escaneando
+                    </Text>
+                  </HStack>
+                </Box>
                 {/* Card visual para aplicar descuento/cupón */}
                 <Box bg={palette.card} borderRadius={14} p={18} alignItems="flex-start" shadow={2} mt={2} mb={2} width="100%">
                   <HStack alignItems="center" mb={3}>
@@ -444,30 +522,158 @@ export default function AgregarProductosScreen({ navigation, route }) {
             keyExtractor={item => item.id?.toString()}
             ListEmptyComponent={<Text color={palette.text} textAlign="center" m={3}>No hay productos agregados.</Text>}
             renderItem={({ item, index }) => (
-              <Swipeable
-                key={item.id}
-                renderLeftActions={() => (
-                  <Box justifyContent="center" alignItems="flex-start" bg="#ffebee" height="100%" pl={4}>
-                    <MaterialIcons name={item.qty > 1 ? "remove" : "delete"} size={28} color="#e53935" />
+              swipeEnabled ? (
+                <Swipeable
+                  key={item.id}
+                  renderLeftActions={() => (
+                    <Box justifyContent="center" alignItems="flex-start" bg="#ffebee" height="100%" pl={4}>
+                      <MaterialIcons name={item.qty > 1 ? "remove" : "delete"} size={28} color="#e53935" />
+                    </Box>
+                  )}
+                  renderRightActions={() => (
+                    <Box justifyContent="center" alignItems="flex-end" bg="#e0f7fa" height="100%" pr={4}>
+                      <MaterialIcons name="add" size={28} color="#43a047" />
+                    </Box>
+                  )}
+                  onSwipeableLeftOpen={() => {
+                    if (item.qty > 1) {
+                      setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
+                    } else {
+                      setProducts(products.filter(p => p.id !== item.id));
+                    }
+                  }}
+                  onSwipeableRightOpen={() => {
+                    setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+                  }}
+                >
+                  <Box
+                    flexDirection="row"
+                    alignItems="center"
+                    bg="#fff"
+                    shadow={2}
+                    borderRadius={16}
+                    py={14}
+                    mb={3}
+                    mx={2}
+                    width="100%"
+                    p={12}
+                    style={{ alignSelf: 'center' }}
+                  >
+                    <Box flex={1} justifyContent="center" ml={4}>
+                      <Text color={palette.text} fontWeight="bold" fontSize={16} mb={1}>
+                        {item.name || item.nombre || item.first_name || 'Sin nombre'}
+                      </Text>
+                      <Text color={palette.textSecondary} fontSize={13} mb={1}>
+                        {
+                          (() => {
+                            const catId = item.category || item.categoria;
+                            if (!catId) return 'Sin categoría';
+                            if (typeof catId === 'object' && catId.name) return catId.name;
+                            const foundCat = categories.find(c => c.id === catId || c.id === Number(catId));
+                            return foundCat ? foundCat.name : `Categoría: ${catId}`;
+                          })()
+                        }
+                      </Text>
+                      <Text color={palette.textSecondary} fontSize={12}>
+                        Código: {item.code || item.codigo || item.id}
+                      </Text>
+                    </Box>
+                    <Box alignItems="center" justifyContent="center" minWidth={100}>
+                      <Box flexDirection="column" alignItems="center" justifyContent="center">
+                        <Box flexDirection="row" alignItems="center" mb={2}>
+                          {buttonsEnabled && (
+                            <>
+                              {item.qty > 1 ? (
+                                <TouchableOpacity onPress={() => {
+                                  setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
+                                }} style={{ paddingHorizontal: 6 }}>
+                                  <MaterialIcons name="remove-circle-outline" size={22} color="#e53935" />
+                                </TouchableOpacity>
+                              ) : (
+                                <TouchableOpacity onPress={() => setProducts(products.filter(p => p.id !== item.id))} style={{ paddingHorizontal: 6 }}>
+                                  <MaterialIcons name="delete" size={22} color="#e53935" />
+                                </TouchableOpacity>
+                              )}
+                              <FormInput
+                                value={item.qty === 0 ? '' : String(item.qty)}
+                                onChangeText={v => {
+                                  if (!window.qtyTimeouts) window.qtyTimeouts = {};
+                                  if (window.qtyTimeouts[item.id]) clearTimeout(window.qtyTimeouts[item.id]);
+                                  if (v === '' || v === '0') {
+                                    setProducts(products.map(p => p.id === item.id ? { ...p, qty: 0 } : p));
+                                    window.qtyTimeouts[item.id] = setTimeout(() => {
+                                      setProducts(products => products.map(p => p.id === item.id ? { ...p, qty: 1 } : p));
+                                    }, 1000);
+                                    return;
+                                  }
+                                  const val = Math.max(1, parseInt(v.replace(/[^0-9]/g, '')) || 1);
+                                  setProducts(products.map(p => p.id === item.id ? { ...p, qty: val } : p));
+                                }}
+                                keyboardType="numeric"
+                                style={{ minWidth: 48, maxWidth: 70, height: 22, textAlign: 'center', fontWeight: 'bold', fontSize: 15, paddingVertical: 0, paddingHorizontal: 0, borderRadius: 8, textAlignVertical: 'center' }}
+                                backgroundColor={palette.input}
+                                textColor={palette.text}
+                              />
+                              <TouchableOpacity onPress={() => {
+                                setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+                              }} style={{ paddingHorizontal: 6 }}>
+                                <MaterialIcons name="add-circle-outline" size={22} color="#43a047" />
+                              </TouchableOpacity>
+                            </>
+                          )}
+                        </Box>
+                        <Popover
+                          isOpen={openPopoverIndex === index}
+                          onOpen={() => setOpenPopoverIndex(index)}
+                          onClose={() => setOpenPopoverIndex(null)}
+                          trigger={triggerProps => (
+                            <TouchableOpacity
+                              {...triggerProps}
+                              style={{ alignItems: 'center', marginTop: 8 }}
+                              onPress={() => setOpenPopoverIndex(openPopoverIndex === index ? null : index)}
+                            >
+                              <Text color={palette.text} fontWeight="bold" fontSize={18} textAlign="center">
+                                ${(item.sale_price * item.qty).toFixed(2)} USD
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        >
+                          <Popover.Content style={{ minWidth: 180, padding: 12 }}>
+                            <Popover.Arrow />
+                            <Popover.Header style={{ width: '100%', textAlign: 'center' }}>
+                              <Text color={palette.text} fontWeight="bold" fontSize={16} textAlign="center">Precios en otras monedas</Text>
+                            </Popover.Header>
+                            <Popover.Body style={{ width: '100%' }}>
+                              {(() => {
+                                const priceUSD = (item.sale_price * item.qty).toFixed(2);
+                                const usdToEur = 0.92;
+                                const usdToCop = 4000;
+                                const priceEUR = (item.sale_price * usdToEur * item.qty).toFixed(2);
+                                const priceCOP = (item.sale_price * usdToCop * item.qty).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+                                const unitUSD = Number(item.sale_price).toFixed(2);
+                                const unitEUR = (Number(item.sale_price) * usdToEur).toFixed(2);
+                                const unitCOP = (Number(item.sale_price) * usdToCop).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+                                return (
+                                  <>
+                                    <Text color={palette.text} fontWeight="bold" fontSize={15} mb={1} textAlign="center">Precio unitario:</Text>
+                                    <Text color={palette.text} fontSize={15} mb={1} textAlign="center">${unitUSD} USD | €{unitEUR} EUR | {unitCOP} COP</Text>
+                                    <Text color={palette.text} fontWeight="bold" fontSize={15} mt={2} mb={1} textAlign="center">Total:</Text>
+                                    <Text color={palette.text} fontSize={16} mb={2} textAlign="center">${priceUSD} USD</Text>
+                                    <Text color={palette.textSecondary} fontSize={15} mb={2} textAlign="center">€{priceEUR} EUR</Text>
+                                    <Text color={palette.textSecondary} fontSize={15} textAlign="center">{priceCOP} COP</Text>
+                                  </>
+                                );
+                              })()}
+                            </Popover.Body>
+                          </Popover.Content>
+                        </Popover>
+                      </Box>
+                    </Box>
                   </Box>
-                )}
-                renderRightActions={() => (
-                  <Box justifyContent="center" alignItems="flex-end" bg="#e0f7fa" height="100%" pr={4}>
-                    <MaterialIcons name="add" size={28} color="#43a047" />
-                  </Box>
-                )}
-                onSwipeableLeftOpen={() => {
-                  if (item.qty > 1) {
-                    setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
-                  } else {
-                    setProducts(products.filter(p => p.id !== item.id));
-                  }
-                }}
-                onSwipeableRightOpen={() => {
-                  setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
-                }}
-              >
+                </Swipeable>
+              ) : (
                 <Box
+                  key={item.id}
                   flexDirection="row"
                   alignItems="center"
                   bg="#fff"
@@ -480,8 +686,6 @@ export default function AgregarProductosScreen({ navigation, route }) {
                   p={12}
                   style={{ alignSelf: 'center' }}
                 >
-                  {/* Sin imagen, solo info */}
-                  {/* Info principal */}
                   <Box flex={1} justifyContent="center" ml={4}>
                     <Text color={palette.text} fontWeight="bold" fontSize={16} mb={1}>
                       {item.name || item.nombre || item.first_name || 'Sin nombre'}
@@ -489,7 +693,6 @@ export default function AgregarProductosScreen({ navigation, route }) {
                     <Text color={palette.textSecondary} fontSize={13} mb={1}>
                       {
                         (() => {
-                          // Buscar el nombre de la categoría por id
                           const catId = item.category || item.categoria;
                           if (!catId) return 'Sin categoría';
                           if (typeof catId === 'object' && catId.name) return catId.name;
@@ -502,48 +705,49 @@ export default function AgregarProductosScreen({ navigation, route }) {
                       Código: {item.code || item.codigo || item.id}
                     </Text>
                   </Box>
-                  {/* Controles y precio: cantidad y precio uno debajo del otro, centrados */}
                   <Box alignItems="center" justifyContent="center" minWidth={100}>
                     <Box flexDirection="column" alignItems="center" justifyContent="center">
                       <Box flexDirection="row" alignItems="center" mb={2}>
-                        {item.qty > 1 ? (
-                          <TouchableOpacity onPress={() => {
-                            setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
-                          }} style={{ paddingHorizontal: 6 }}>
-                            <MaterialIcons name="remove-circle-outline" size={22} color="#e53935" />
-                          </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity onPress={() => setProducts(products.filter(p => p.id !== item.id))} style={{ paddingHorizontal: 6 }}>
-                            <MaterialIcons name="delete" size={22} color="#e53935" />
-                          </TouchableOpacity>
+                        {buttonsEnabled && (
+                          <>
+                            {item.qty > 1 ? (
+                              <TouchableOpacity onPress={() => {
+                                setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
+                              }} style={{ paddingHorizontal: 6 }}>
+                                <MaterialIcons name="remove-circle-outline" size={22} color="#e53935" />
+                              </TouchableOpacity>
+                            ) : (
+                              <TouchableOpacity onPress={() => setProducts(products.filter(p => p.id !== item.id))} style={{ paddingHorizontal: 6 }}>
+                                <MaterialIcons name="delete" size={22} color="#e53935" />
+                              </TouchableOpacity>
+                            )}
+                            <FormInput
+                              value={item.qty === 0 ? '' : String(item.qty)}
+                              onChangeText={v => {
+                                if (!window.qtyTimeouts) window.qtyTimeouts = {};
+                                if (window.qtyTimeouts[item.id]) clearTimeout(window.qtyTimeouts[item.id]);
+                                if (v === '' || v === '0') {
+                                  setProducts(products.map(p => p.id === item.id ? { ...p, qty: 0 } : p));
+                                  window.qtyTimeouts[item.id] = setTimeout(() => {
+                                    setProducts(products => products.map(p => p.id === item.id ? { ...p, qty: 1 } : p));
+                                  }, 1000);
+                                  return;
+                                }
+                                const val = Math.max(1, parseInt(v.replace(/[^0-9]/g, '')) || 1);
+                                setProducts(products.map(p => p.id === item.id ? { ...p, qty: val } : p));
+                              }}
+                              keyboardType="numeric"
+                              style={{ minWidth: 48, maxWidth: 70, height: 22, textAlign: 'center', fontWeight: 'bold', fontSize: 15, paddingVertical: 0, paddingHorizontal: 0, borderRadius: 8, textAlignVertical: 'center' }}
+                              backgroundColor={palette.input}
+                              textColor={palette.text}
+                            />
+                            <TouchableOpacity onPress={() => {
+                              setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+                            }} style={{ paddingHorizontal: 6 }}>
+                              <MaterialIcons name="add-circle-outline" size={22} color="#43a047" />
+                            </TouchableOpacity>
+                          </>
                         )}
-                        <FormInput
-                          value={item.qty === 0 ? '' : String(item.qty)}
-                          onChangeText={v => {
-                            if (!window.qtyTimeouts) window.qtyTimeouts = {};
-                            // Limpiar timeout anterior
-                            if (window.qtyTimeouts[item.id]) clearTimeout(window.qtyTimeouts[item.id]);
-                            if (v === '' || v === '0') {
-                              setProducts(products.map(p => p.id === item.id ? { ...p, qty: 0 } : p));
-                              // Colocar 1 después de 1 segundo si sigue vacío
-                              window.qtyTimeouts[item.id] = setTimeout(() => {
-                                setProducts(products => products.map(p => p.id === item.id ? { ...p, qty: 1 } : p));
-                              }, 1000);
-                              return;
-                            }
-                            const val = Math.max(1, parseInt(v.replace(/[^0-9]/g, '')) || 1);
-                            setProducts(products.map(p => p.id === item.id ? { ...p, qty: val } : p));
-                          }}
-                          keyboardType="numeric"
-                          style={{ minWidth: 48, maxWidth: 70, height: 22, textAlign: 'center', fontWeight: 'bold', fontSize: 15, paddingVertical: 0, paddingHorizontal: 0, borderRadius: 8, textAlignVertical: 'center' }}
-                          backgroundColor={palette.input}
-                          textColor={palette.text}
-                        />
-                        <TouchableOpacity onPress={() => {
-                          setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
-                        }} style={{ paddingHorizontal: 6 }}>
-                          <MaterialIcons name="add-circle-outline" size={22} color="#43a047" />
-                        </TouchableOpacity>
                       </Box>
                       <Popover
                         isOpen={openPopoverIndex === index}
@@ -573,7 +777,6 @@ export default function AgregarProductosScreen({ navigation, route }) {
                               const usdToCop = 4000;
                               const priceEUR = (item.sale_price * usdToEur * item.qty).toFixed(2);
                               const priceCOP = (item.sale_price * usdToCop * item.qty).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-                              // Unitario
                               const unitUSD = Number(item.sale_price).toFixed(2);
                               const unitEUR = (Number(item.sale_price) * usdToEur).toFixed(2);
                               const unitCOP = (Number(item.sale_price) * usdToCop).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
@@ -594,7 +797,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
                     </Box>
                   </Box>
                 </Box>
-              </Swipeable>
+              )
             )}
             showsVerticalScrollIndicator={true}
             style={{ width: '100%' }}
@@ -609,8 +812,10 @@ export default function AgregarProductosScreen({ navigation, route }) {
         {/* Tarjeta de resumen */}
   <Box bg={palette.card} borderRadius={12} p={16} width="95%" style={{ alignSelf: 'center', marginBottom: 150, marginLeft: '2.5%', marginRight: '2.5%' }}>
           <HStack justifyContent="space-between" mb={2}>
-            <Text color={palette.textSecondary}>Items</Text>
-            <Text color={palette.text}>{products.reduce((acc, p) => acc + p.qty, 0)}</Text>
+            <Text color={palette.textSecondary}>Items / Productos</Text>
+            <Text color={palette.text}>
+              {products.reduce((acc, p) => acc + p.qty, 0)} / {products.length}
+            </Text>
           </HStack>
           <HStack justifyContent="space-between" mb={2}>
             <Text color={palette.textSecondary}>Subtotal</Text>
@@ -669,7 +874,10 @@ export default function AgregarProductosScreen({ navigation, route }) {
       {/* BarcodeScannerModal ahora está fuera de cualquier modal/sheet */}
       <BarcodeScannerModal
         visible={showScanner}
-        onScanned={handleBarCodeScanned}
+        scannerMode={scannerMode}
+        onScanned={data => {
+          if (scannerMode === 'cerrar') setShowScanner(false);
+        }}
         onClose={() => setShowScanner(false)}
         allProducts={allProducts}
         onAddProduct={async (product) => {
@@ -686,8 +894,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
             text2: product.name,
           });
         }}
-        // No pasar autoCloseOnScan aquí, así el modal NO se cierra automáticamente
       />
-    </Box>
+	</Box>
   );
 }

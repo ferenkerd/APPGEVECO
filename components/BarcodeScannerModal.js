@@ -6,7 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
 // Recibe allProducts para buscar el nombre del producto escaneado
-export default function BarcodeScannerModal({ visible, onScanned, onClose, allProducts = [], onAddProduct }) {
+export default function BarcodeScannerModal({ visible, onScanned, onClose, allProducts = [], onAddProduct, scannerMode = 'cerrar' }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [barcode, setBarcode] = useState('');
@@ -85,42 +85,47 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose, allPr
               {/* <Text style={styles.codeText}>{barcode}</Text> */}
               {scanned && foundProduct && (
                 <Box bg="#f7f7f7" borderRadius={12} p={14} mb={12} alignItems="center" width={260}>
-                  <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 6, color: '#222' }}>Producto encontrado</Text>
+                  <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 6, color: '#22c55e' }}>Producto encontrado</Text>
                   <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 2 }}>{foundProduct.name}</Text>
                   <Text style={{ fontSize: 14, color: '#666', marginBottom: 2 }}>
                     Código: {foundProduct.code ? foundProduct.code : foundProduct.barcode ? foundProduct.barcode : foundProduct.id}
                   </Text>
                   <Text style={{ fontSize: 14, color: '#666', marginBottom: 2 }}>Precio: ${foundProduct.sale_price}</Text>
                   <Text style={{ fontSize: 14, color: '#666', marginBottom: 10 }}>Stock: {foundProduct.stock_quantity ?? 'N/A'}</Text>
-                  <HStack space="md" width="100%" justifyContent="center">
+                  <HStack space="md" width="100%" justifyContent="space-between">
+                    <Button
+                      variant="outline"
+                      borderColor="#111"
+                      onPress={() => {
+                        setScanned(false);
+                        setBarcode('');
+                        setFoundProduct(null);
+                      }}
+                      style={{ borderRadius: 8, paddingHorizontal: 16 }}
+                    >
+                      <Text style={{ color: '#111', fontWeight: 'bold', fontSize: 15 }}>Reiniciar</Text>
+                    </Button>
                     <Button
                       bg="#111"
-                      onPress={() => {
+                      onPress={async () => {
                         if (onAddProduct && foundProduct) {
-                          onAddProduct(foundProduct);
+                          await onAddProduct(foundProduct);
                         }
                         onScanned && onScanned(barcode);
+                        if (scannerMode === 'continuar') {
+                          setTimeout(() => {
+                            setScanned(false);
+                            setBarcode('');
+                            setFoundProduct(null);
+                          }, 350); // Pequeño delay para feedback visual
+                        }
                       }}
                       style={{ borderRadius: 8, paddingHorizontal: 16 }}
                     >
                       <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 15 }}>Añadir</Text>
                     </Button>
-                    <Button
-                      variant="outline"
-                      borderColor="#111"
-                      onPress={() => { setScanned(false); setBarcode(''); setFoundProduct(null); }}
-                      style={{ borderRadius: 8, paddingHorizontal: 16 }}
-                    >
-                      <Text style={{ color: '#111', fontWeight: 'bold', fontSize: 15 }}>Cancelar</Text>
-                    </Button>
                   </HStack>
-                  <Button
-                    bg="#111"
-                    onPress={onClose}
-                    style={{ borderRadius: 8, marginTop: 8, paddingHorizontal: 16 }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 15 }}>Cerrar</Text>
-                  </Button>
+
                 </Box>
               )}
               {scanned && !foundProduct && (
