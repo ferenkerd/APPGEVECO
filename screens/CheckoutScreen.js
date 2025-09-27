@@ -5,7 +5,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { useAuth } from '../context/AuthContext';
-import { createSale, registerPayment, getPaymentMode } from '../services/api';
+import { createSale, registerPayment, getPaymentMode, getPaymentMethods } from '../services/api';
 
 // Recibe los datos de productos, cliente y total por params
 export default function CheckoutScreen() {
@@ -31,8 +31,8 @@ export default function CheckoutScreen() {
       return;
     }
     try {
-      const methods = await getPaymentMode(user?.access, true); // true para obtener métodos
-      setPaymentMethods(methods?.methods || []);
+      const methods = await getPaymentMethods(user?.access);
+      setPaymentMethods(Array.isArray(methods) ? methods : (methods?.methods || []));
     } catch {
       setPaymentMethodsError(true);
     }
@@ -238,15 +238,22 @@ export default function CheckoutScreen() {
           </Box>
           <Text fontWeight="bold" mb={8}>Método de pago</Text>
           <Box mb={16} borderWidth={1} borderColor="#ccc" borderRadius={8} overflow="hidden">
-            <Picker
-              selectedValue={paymentMethod}
-              onValueChange={(itemValue) => setPaymentMethod(itemValue)}
-            >
-              <Picker.Item label="Selecciona método de pago" value="" />
-              {(Array.isArray(paymentMethods) ? paymentMethods : []).map((pm) => (
-                <Picker.Item key={pm.id} label={pm.name} value={pm.id} />
-              ))}
-            </Picker>
+            {paymentMethods.length === 0 && !paymentMethodsError ? (
+              <Text color="#f00" fontWeight="bold" p={12} textAlign="center">
+                No hay métodos de pago disponibles. Contacte al administrador.
+              </Text>
+            ) : (
+              <Picker
+                selectedValue={paymentMethod}
+                onValueChange={(itemValue) => setPaymentMethod(itemValue)}
+                enabled={paymentMethods.length > 0}
+              >
+                <Picker.Item label="Selecciona método de pago" value="" />
+                {(Array.isArray(paymentMethods) ? paymentMethods : []).map((pm) => (
+                  <Picker.Item key={pm.id} label={pm.name} value={pm.id} />
+                ))}
+              </Picker>
+            )}
           </Box>
           {paymentMethodsError && (
             <Button
@@ -274,7 +281,7 @@ export default function CheckoutScreen() {
             ((user?.user?.job_position === 1 || user?.user?.job_position === 2) && paymentMode === 'admin')) && (
             <Button
               bg="#111"
-              isDisabled={!paymentMethod || loading}
+              isDisabled={!paymentMethod || loading || paymentMethods.length === 0}
               onPress={handleConfirm}
               borderRadius={8}
               style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
@@ -285,7 +292,7 @@ export default function CheckoutScreen() {
           {user?.user?.job_position === 4 && paymentMode === 'admin' && (
             <Button
               bg="#f7b731"
-              isDisabled={loading}
+              isDisabled={loading || paymentMethods.length === 0}
               onPress={handlePendingOrder}
               borderRadius={8}
               style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}

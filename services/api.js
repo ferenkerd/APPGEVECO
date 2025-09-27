@@ -1,3 +1,7 @@
+// Obtener métodos de pago disponibles
+export async function getPaymentMethods(accessToken) {
+  return apiFetch('payment-methods/', { method: 'GET' }, accessToken);
+}
 // Listar ventas por cajero (usuario actual)
 export async function listSalesByCajero(cajeroId, accessToken) {
   // Asumiendo que el backend soporta filtro por cajero (user o cashier)
