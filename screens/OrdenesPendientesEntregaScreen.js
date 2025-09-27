@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Text, VStack, HStack, Spinner, Pressable } from '@gluestack-ui/themed';
-import { ScrollView } from 'react-native';
+import { ScrollView, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { listSalesByCajero } from '../services/api';
@@ -10,33 +10,41 @@ export default function OrdenesPendientesEntregaScreen() {
   const { user } = useAuth();
   const [ventas, setVentas] = useState([]); // Siempre array
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Función para cargar ventas (reutilizable)
+  const fetchVentas = async () => {
+    try {
+      const cajeroId = user?.user?.user_id || user?.user?.id || user?.user?.pk || user?.user?.username || user?.user?.email;
+      let data = await listSalesByCajero(cajeroId, user?.access);
+      // Refuerzo: asegurar array
+      if (!Array.isArray(data)) {
+        data = [];
+      }
+      setVentas(data.filter(v => {
+        const status = (v.status || '').toLowerCase();
+        // Considerar todas las variantes de entregado
+        const delivered = v.delivered === true
+          || (typeof v.delivery_status === 'string' && v.delivery_status.toLowerCase() === 'delivered')
+          || (!!v.delivered_at && v.delivered_at !== 'null' && v.delivered_at !== null && v.delivered_at !== undefined && v.delivered_at !== '');
+        return status === 'paid' && !delivered;
+      }));
+    } catch (error) {
+      console.error('Error al cargar ventas pendientes:', error);
+      setVentas([]);
+    }
+  };
 
   useEffect(() => {
-    const fetchVentas = async () => {
-      setLoading(true);
-      try {
-        const cajeroId = user?.user?.user_id || user?.user?.id || user?.user?.pk || user?.user?.username || user?.user?.email;
-        let data = await listSalesByCajero(cajeroId, user?.access);
-        // Refuerzo: asegurar array
-        if (!Array.isArray(data)) {
-          data = [];
-        }
-        setVentas(data.filter(v => {
-          const status = (v.status || '').toLowerCase();
-          // Considerar todas las variantes de entregado
-          const delivered = v.delivered === true
-            || (typeof v.delivery_status === 'string' && v.delivery_status.toLowerCase() === 'delivered')
-            || (!!v.delivered_at && v.delivered_at !== 'null' && v.delivered_at !== null && v.delivered_at !== undefined && v.delivered_at !== '');
-          return status === 'paid' && !delivered;
-        }));
-      } catch (error) {
-        console.error('Error al cargar ventas pendientes:', error);
-        setVentas([]);
-      }
-      setLoading(false);
-    };
-    if (user?.user) fetchVentas();
+    setLoading(true);
+    fetchVentas().finally(() => setLoading(false));
   }, [user]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchVentas();
+    setRefreshing(false);
+  };
 
   if (loading) {
     return (
@@ -49,7 +57,10 @@ export default function OrdenesPendientesEntregaScreen() {
 
   return (
     <Box flex={1} bg="#fff">
-      <ScrollView contentContainerStyle={{ padding: 16, flexGrow: 1 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
         <Text fontWeight="bold" fontSize={22} mb={12} color="#b8860b">Órdenes por entregar</Text>
         {!Array.isArray(ventas) ? (
           <Text color="#c00" fontSize={12}>Error: ventas no es un array. Valor: {JSON.stringify(ventas)}</Text>
