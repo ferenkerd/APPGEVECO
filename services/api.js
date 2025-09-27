@@ -48,6 +48,28 @@ export async function setPaymentMode(mode, accessToken) {
     body: JSON.stringify({ mode })
   }, accessToken);
 }
+// Aprobar venta (admin)
+export async function approveSale(saleId, data, accessToken) {
+  return apiFetch(`sales/${saleId}/approve/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }, accessToken);
+}
+
+// Rechazar venta (admin)
+export async function rejectSale(saleId, accessToken) {
+  return apiFetch(`sales/${saleId}/reject/`, {
+    method: 'PATCH'
+  }, accessToken);
+}
+
+// Marcar venta como entregada (cajero)
+export async function deliverSale(saleId, accessToken) {
+  return apiFetch(`sales/${saleId}/deliver/`, {
+    method: 'PATCH'
+  }, accessToken);
+}
+
 import { devLog } from '../utils/logger';
 import { Storage } from './storage';
 

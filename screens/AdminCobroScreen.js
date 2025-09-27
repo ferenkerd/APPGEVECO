@@ -1,0 +1,272 @@
+import React, { useState, useEffect, useContext } from 'react';
+import { Box, VStack, HStack, Button, Text, Divider, Popover } from '@gluestack-ui/themed';
+import { ScrollView, TextInput } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import Toast from 'react-native-toast-message';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { getPaymentMethods, registerPayment, approveSale } from '../services/api';
+import { ColorModeContext } from '../context/ColorModeContext';
+import { getPalette } from '../styles/theme';
+
+export default function AdminCobroScreen() {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { venta, client, products, total, paymentType, currency } = route.params;
+  const { colorMode } = useContext(ColorModeContext);
+  const palette = getPalette(colorMode);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [openPopoverIdx, setOpenPopoverIdx] = useState(null);
+  const [paymentMethodsError, setPaymentMethodsError] = useState(false);
+  const [montoRecibido, setMontoRecibido] = useState('');
+
+  const fetchMethods = async () => {
+    setPaymentMethodsError(false);
+    try {
+      const methods = await getPaymentMethods();
+      setPaymentMethods(Array.isArray(methods) ? methods : (methods?.methods || []));
+    } catch {
+      setPaymentMethodsError(true);
+    }
+  };
+  useEffect(() => {
+    fetchMethods();
+  }, []);
+
+  const vuelto = () => {
+    const recibido = Number(montoRecibido) || 0;
+    const totalNum = Number(total) || 0;
+    return recibido > totalNum ? (recibido - totalNum).toFixed(2) : '';
+  };
+
+  const handleCobrar = async () => {
+    if (!paymentMethod || !montoRecibido) {
+      Toast.show({ type: 'error', text1: 'Completa todos los campos' });
+      return;
+    }
+    setLoading(true);
+    try {
+      await approveSale(venta.id, { payment_method: paymentMethod, paid_amount: Number(montoRecibido), change: vuelto() }, venta.access);
+      Toast.show({ type: 'success', text1: 'Venta cobrada correctamente' });
+      navigation.replace('ResumenVenta', {
+        venta: { ...venta, status: 'paid', payment_method: paymentMethod },
+        client,
+        products,
+        total,
+        paymentType: paymentMethod,
+        currency: currency || 'USD',
+        paymentMethods,
+      });
+    } catch (e) {
+      Toast.show({ type: 'error', text1: 'Error', text2: e.message || 'No se pudo cobrar la venta.' });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Box flex={1} bg="#fff">
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 24, paddingBottom: 56, flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <Text fontSize={22} fontWeight="bold" mb={12} color="#000">Resumen de Operación</Text>
+        <Box bg="#f5f6fa" borderRadius={12} p={16} mb={16}>
+          <Text fontWeight="bold" color="#111" mb={4}>Cliente</Text>
+          <VStack mb={8} space="xs">
+            <Text><Text fontWeight="bold">Nombre:</Text> {client?.first_name || client?.nombre || ''} {client?.last_name || ''}</Text>
+            {client?.identity_card && (
+              <Text><Text fontWeight="bold">Cédula:</Text> {client.identity_card}</Text>
+            )}
+            {client?.rif && (
+              <Text><Text fontWeight="bold">RIF:</Text> {client.rif}</Text>
+            )}
+            {client?.client_type && (
+              <Text><Text fontWeight="bold">Tipo de cliente:</Text> {client.client_type}</Text>
+            )}
+            {client?.business_name && (
+              <Text><Text fontWeight="bold">Razón social:</Text> {client.business_name}</Text>
+            )}
+            {(client?.contact_phone || client?.telefono || client?.phone) && (
+              <Text>
+                <Text fontWeight="bold">Teléfono:</Text> {client.prefix?.code ? `${client.prefix.code}-` : ''}{client.contact_phone || client.telefono || client.phone}
+              </Text>
+            )}
+            {client?.email && (
+              <Text><Text fontWeight="bold">Correo:</Text> {client.email}</Text>
+            )}
+            {(client?.address || client?.direccion) && (
+              <Text><Text fontWeight="bold">Dirección:</Text> {client.address || client.direccion}</Text>
+            )}
+          </VStack>
+          <Divider my={8} />
+          <Text fontWeight="bold" color="#111" mb={4}>Productos</Text>
+          <VStack space="sm">
+            {products.map((prod, idx) => {
+              const qty = prod.qty || prod.quantity || prod.product_quantity || 1;
+              // Buscar nombre de producto en todas las variantes posibles
+              const productName = prod.name || prod.product_name || prod.nombre || prod.product?.name || prod.product?.product_name || prod.product?.nombre || '';
+              // Buscar precio unitario en todas las variantes posibles
+              const price = Number(
+                prod.sale_price_at_time_of_sale ??
+                prod.sale_price ??
+                prod.price ??
+                prod.unit_price ??
+                (prod.product && (prod.product.sale_price ?? prod.product.price ?? prod.product.unit_price)) ??
+                0
+              );
+              return (
+                <HStack key={idx} justifyContent="space-between" alignItems="center">
+                  {/* Columna: Nombre del producto (con popover) */}
+                  <Box flex={2} maxWidth={180}>
+                    <Popover
+                      isOpen={openPopoverIdx === idx}
+                      onOpen={() => setOpenPopoverIdx(idx)}
+                      onClose={() => setOpenPopoverIdx(null)}
+                      closeOnBlur={true}
+                      closeOnEsc={true}
+                      trigger={triggerProps => (
+                        <Text
+                          {...triggerProps}
+                          style={{ maxWidth: 180 }}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {productName}
+                        </Text>
+                      )}
+                    >
+                      <Popover.Content
+                        style={{
+                          backgroundColor: '#fff',
+                          borderWidth: 1,
+                          borderColor: '#111',
+                          maxWidth: 260,
+                        }}
+                      >
+                        <Popover.Arrow style={{ backgroundColor: '#fff' }} />
+                        <Popover.Body style={{ flexShrink: 1 }}>
+                          <ScrollView
+                            nestedScrollEnabled={true}
+                            contentContainerStyle={{ flexGrow: 1}}
+                            style={{ minHeight: 32, maxHeight: 140, maxWidth: 240 }}
+                          >
+                            <Text
+                              style={{ fontSize: 16, textAlign: 'center', flexWrap: 'wrap' }}
+                              onPress={() => setOpenPopoverIdx(null)}
+                            >
+                              {productName}
+                            </Text>
+                          </ScrollView>
+                        </Popover.Body>
+                      </Popover.Content>
+                    </Popover>
+                  </Box>
+                  {/* Columna: Cantidad */}
+                  <Box flex={1} alignItems="center">
+                    <Text fontWeight="bold" color="#222">x{qty}</Text>
+                  </Box>
+                  {/* Columna: Precios */}
+                  <VStack alignItems="flex-end" flex={2}>
+                    <Text fontSize={13} color="#888">Unit: ${price.toFixed(2)}</Text>
+                    <Text fontWeight="bold">${(price * qty).toFixed(2)}</Text>
+                  </VStack>
+                </HStack>
+              );
+            })}
+          </VStack>
+          <Divider my={8} />
+          {/* Resumen compacto igual a CheckoutScreen */}
+          <HStack justifyContent="space-between" mb={2}>
+            <Text color="#000" fontWeight="bold">Items / Productos</Text>
+            <Text color="#222">{products.reduce((acc, p) => acc + (p.qty || p.quantity || 1), 0)} / {products.length}</Text>
+          </HStack>
+          <HStack justifyContent="space-between" mb={2}>
+            <Text color="#000" fontWeight="bold">Subtotal</Text>
+            <Text color="#222">${total && total.toFixed ? total.toFixed(2) : Number(total).toFixed(2)}</Text>
+          </HStack>
+          <HStack justifyContent="space-between" mt={2}>
+            <Text color="#000" fontWeight="bold" fontSize={18}>Total</Text>
+            <Text color="#222" fontWeight="bold" fontSize={18}>${total && total.toFixed ? total.toFixed(2) : Number(total).toFixed(2)}</Text>
+          </HStack>
+        </Box>
+        <Text fontWeight="bold" mb={8}>Método de pago</Text>
+        <Box mb={16} borderWidth={1} borderColor="#ccc" borderRadius={8} overflow="hidden">
+          {paymentMethods.length === 0 && !paymentMethodsError ? (
+            <Text color="#f00" fontWeight="bold" p={12} textAlign="center">
+              No hay métodos de pago disponibles. Contacte al administrador.
+            </Text>
+          ) : (
+            <Picker
+              selectedValue={paymentMethod}
+              onValueChange={setPaymentMethod}
+              enabled={paymentMethods.length > 0}
+            >
+              <Picker.Item label="Selecciona método de pago" value="" />
+              {(Array.isArray(paymentMethods) ? paymentMethods : []).map((pm) => (
+                <Picker.Item key={pm.id} label={pm.name} value={pm.id} />
+              ))}
+            </Picker>
+          )}
+        </Box>
+        {paymentMethodsError && (
+          <Button
+            variant="outline"
+            borderColor="#f00"
+            mt={-8}
+            mb={12}
+            borderRadius={8}
+            style={{ paddingVertical: 10, minHeight: 40, width: '100%', borderWidth: 1 }}
+            onPress={() => {
+              setPaymentMethods([]);
+              setPaymentMethod('');
+              fetchMethods();
+            }}
+          >
+            <Text color="#f00" fontWeight="bold" fontSize={15} style={{ textAlign: 'center' }}>Reintentar cargar métodos de pago</Text>
+          </Button>
+        )}
+        <Box mb={2}>
+          <Text color={palette.text} mb={1}>Monto recibido:</Text>
+          <TextInput
+            value={montoRecibido}
+            onChangeText={setMontoRecibido}
+            placeholder="Monto recibido"
+            keyboardType="numeric"
+            style={{ width: '100%', padding: 8, borderRadius: 6, borderWidth: 1, borderColor: '#ccc', marginBottom: 8, color: palette.text }}
+          />
+        </Box>
+        <Box mb={2}>
+          <Text color={palette.text} mb={1}>Vueltos:</Text>
+          <TextInput
+            value={vuelto()}
+            editable={false}
+            placeholder="Vueltos"
+            keyboardType="numeric"
+            style={{ width: '100%', padding: 8, borderRadius: 6, borderWidth: 1, borderColor: '#ccc', marginBottom: 8, color: palette.text, backgroundColor: '#f5f5f5' }}
+          />
+        </Box>
+        <Button
+          bg="#111"
+          isDisabled={!paymentMethod || !montoRecibido || loading || paymentMethods.length === 0}
+          onPress={handleCobrar}
+          borderRadius={8}
+          style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
+        >
+          <Text color="#fff" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Procesando...' : 'Aceptar y Cobrar'}</Text>
+        </Button>
+        <Button
+          variant="outline"
+          borderColor="#111"
+          borderRadius={8}
+          style={{ paddingVertical: 12, minHeight: 44, width: '100%', borderWidth: 1, marginBottom: 48}}
+          onPress={() => navigation.goBack()}
+        >
+          <Text color="#111" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>Cancelar</Text>
+        </Button>
+        {/* Footer visual para espacio de botones Android */}
+        <Box height={48} />
+        <Box height={48} bg="#fff" />
+      </ScrollView>
+      {/* Footer fijo visual para espacio de botones Android */}
+      <Box position="absolute" left={0} right={0} bottom={0} height={48} bg="#fff" pointerEvents="none"></Box>
+    </Box>
+  );
+}

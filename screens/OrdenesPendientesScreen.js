@@ -127,81 +127,48 @@ export default function OrdenesPendientesScreen({ navigation }) {
         ) : (
           <VStack space="md">
             {ordenes.map((orden) => (
-              <Box
+              <TouchableOpacity
                 key={orden.id}
-                bg={palette.card || '#fff'}
-                borderRadius={16}
-                shadow={1}
-                p={16}
-                mb={12}
-                borderWidth={1}
-                borderColor={palette.border}
+                onPress={() => navigation.navigate('AdminCobroScreen', {
+                  venta: orden,
+                  client: orden.client,
+                  products: orden.details || [],
+                  total: orden.total_amount,
+                  paymentType: orden.payment_method || '',
+                  currency: 'USD',
+                })}
+                activeOpacity={0.8}
               >
-                <HStack justifyContent="space-between" alignItems="center" mb={2}>
-                  <Text fontWeight="bold" fontSize={15} color={palette.text}>Operación #{orden.id}</Text>
-                  <Text fontSize={13} color={palette.textSecondary}>
-                    Cajero: {orden.cashier?.username || (typeof orden.cashier === 'string' ? orden.cashier : 'N/A')}
+                <Box
+                  bg={palette.card || '#fff'}
+                  borderRadius={16}
+                  shadow={1}
+                  p={16}
+                  mb={12}
+                  borderWidth={1}
+                  borderColor={palette.border}
+                >
+                  <HStack justifyContent="space-between" alignItems="center" mb={2}>
+                    <Text fontWeight="bold" fontSize={15} color={palette.text}>Operación #{orden.id}</Text>
+                    <Text fontSize={13} color={palette.textSecondary}>
+                      Cajero: {orden.cashier?.username || (typeof orden.cashier === 'string' ? orden.cashier : 'N/A')}
+                    </Text>
+                  </HStack>
+                  <Text fontSize={16} color={palette.text} mb={1}>
+                    Cliente: {orden.client?.first_name || ''} {orden.client?.last_name || ''}
                   </Text>
-                </HStack>
-                <Text fontSize={16} color={palette.text} mb={1}>
-                  Cliente: {orden.client?.first_name || ''} {orden.client?.last_name || ''}
-                </Text>
-                <Text fontSize={15} color={palette.textSecondary} mb={1}>Total: ${orden.total_amount}</Text>
-                <Text fontSize={13} color={palette.textSecondary} mb={1}>
-                  Fecha: {orden.sale_date ? new Date(orden.sale_date).toLocaleString() : (orden.created_at || '')}
-                </Text>
-                {isAdmin && modoCobro === 'admin' && (
-                  <CustomButton
-                    onPress={() => openCobroModal(orden.id, orden.total_amount)}
-                    backgroundColor={palette.primary}
-                    textColor={palette.background}
-                    isLoading={processing}
-                    style={{ marginTop: 10, width: '100%' }}
-                  >
-                    Cobrar
-                  </CustomButton>
-                )}
-      {/* Modal para cobrar */}
-      <Modal
-        visible={showModal}
-        transparent
-        animationType="slide"
-        onRequestClose={closeCobroModal}
-      >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 24, width: 320 }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 12 }}>Registrar pago</Text>
-            <Text style={{ marginBottom: 6 }}>Método de pago (ID):</Text>
-            <TextInput
-              value={paymentMethod}
-              onChangeText={setPaymentMethod}
-              placeholder="ID del método de pago"
-              keyboardType="numeric"
-              style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 6, marginBottom: 12, padding: 8 }}
-            />
-            <Text style={{ marginBottom: 6 }}>Monto pagado:</Text>
-            <TextInput
-              value={paidAmount}
-              onChangeText={setPaidAmount}
-              placeholder="Monto pagado"
-              keyboardType="numeric"
-              style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 6, marginBottom: 16, padding: 8 }}
-            />
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-              <TouchableOpacity onPress={closeCobroModal} style={{ marginRight: 16 }}>
-                <Text style={{ color: '#888', fontWeight: 'bold' }}>Cancelar</Text>
+                  <Text fontSize={15} color={palette.textSecondary} mb={1}>Total: ${orden.total_amount}</Text>
+                  <Text fontSize={13} color={palette.textSecondary} mb={1}>
+                    Fecha: {orden.sale_date ? new Date(orden.sale_date).toLocaleString() : (orden.created_at || '')}
+                  </Text>
+                  {isAdmin && modoCobro === 'admin' && (
+                    <Text color={palette.primary} fontWeight="bold" mt={2}>Toca para cobrar y aprobar</Text>
+                  )}
+                  {!isAdmin && modoCobro === 'admin' && (
+                    <Text color="#ff9900" mt={2} fontWeight="bold">Esperando pago del administrador...</Text>
+                  )}
+                </Box>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleCobrar} style={{ backgroundColor: palette.primary, borderRadius: 6, paddingVertical: 8, paddingHorizontal: 18 }}>
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>{processing ? 'Procesando...' : 'Cobrar'}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-                {!isAdmin && modoCobro === 'admin' && (
-                  <Text color="#ff9900" mt={2} fontWeight="bold">Esperando pago del administrador...</Text>
-                )}
-              </Box>
             ))}
           </VStack>
         )}

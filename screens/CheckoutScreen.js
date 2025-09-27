@@ -56,15 +56,14 @@ export default function CheckoutScreen() {
     // Si no, puedes hacerlo al volver a la pantalla de productos
   };
 
-  // Lógica de crear venta y pago (directa)
+  // Lógica de crear venta y pago (directa o pendiente según modo de cobro)
   const handleConfirm = async () => {
     setLoading(true);
     try {
-      // 1. Crear venta
       const saleBody = {
         client_id: selectedClient.id,
         total_amount: total,
-        status: 'paid',
+        status: paymentMode === 'admin' ? 'pending' : 'paid',
         details_input: selectedProducts.map(prod => ({
           product: prod.id,
           product_quantity: prod.qty || prod.quantity || 1,
@@ -74,56 +73,30 @@ export default function CheckoutScreen() {
       };
       console.log('Body que se enviará a /sales/:', saleBody);
       const sale = await createSale(saleBody, user?.access);
-      await registerPayment({
-        sale: sale.id,
-        payment_method: paymentMethod, // Ahora es el ID real
-        paid_amount: total
-      }, user?.access);
-      Toast.show({ type: 'success', text1: 'Operación registrada', text2: 'El pago se realizó correctamente.' });
-      clearCart();
-      navigation.replace('ResumenVenta', {
-        venta: sale,
-        client: selectedClient,
-        products: selectedProducts,
-        total,
-        paymentType: paymentMethod,
-        currency: 'USD',
-      });
+      if (paymentMode === 'admin') {
+        Toast.show({ type: 'success', text1: 'Orden pendiente creada', text2: 'La orden fue registrada correctamente.' });
+        clearCart();
+        navigation.replace('ConfirmacionOperacion');
+      } else {
+        await registerPayment({
+          sale: sale.id,
+          payment_method: paymentMethod,
+          paid_amount: total
+        }, user?.access);
+        Toast.show({ type: 'success', text1: 'Operación registrada', text2: 'El pago se realizó correctamente.' });
+        clearCart();
+        navigation.replace('ResumenVenta', {
+          venta: sale,
+          client: selectedClient,
+          products: selectedProducts,
+          total,
+          paymentType: paymentMethod,
+          currency: 'USD',
+          paymentMethods,
+        });
+      }
     } catch (e) {
       Toast.show({ type: 'error', text1: 'Error', text2: e.message || 'No se pudo registrar la operación.' });
-    }
-    setLoading(false);
-  };
-
-  // Lógica de crear orden pendiente (solo admin y modo admin)
-  const handlePendingOrder = async () => {
-    setLoading(true);
-    try {
-      const saleBody = {
-        client_id: selectedClient.id,
-        total_amount: total,
-        status: 'pending',
-        details_input: selectedProducts.map(prod => ({
-          product: prod.id,
-          product_quantity: prod.qty || prod.quantity || 1,
-          sale_price_at_time_of_sale: Number(prod.sale_price || prod.price || 0),
-          applied_discount: 0
-        }))
-      };
-      console.log('Body que se enviará a /sales/ (pendiente):', saleBody);
-      const sale = await createSale(saleBody, user?.access);
-      Toast.show({ type: 'success', text1: 'Orden pendiente creada', text2: 'La orden fue registrada correctamente.' });
-      clearCart();
-      navigation.replace('ResumenVenta', {
-        venta: sale,
-        client: selectedClient,
-        products: selectedProducts,
-        total,
-        paymentType: 'pendiente',
-        currency: 'USD',
-      });
-    } catch (e) {
-      Toast.show({ type: 'error', text1: 'Error', text2: e.message || 'No se pudo registrar la orden.' });
     }
     setLoading(false);
   };
@@ -293,7 +266,7 @@ export default function CheckoutScreen() {
             <Button
               bg="#f7b731"
               isDisabled={loading || paymentMethods.length === 0}
-              onPress={handlePendingOrder}
+              onPress={handleConfirm}
               borderRadius={8}
               style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
             >

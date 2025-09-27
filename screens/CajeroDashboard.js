@@ -36,6 +36,7 @@ function OtrosProductosScreen() {
 }
 
 // Dashboard como pantalla/tab
+import PendientesEntregaCard from '../components/PendientesEntregaCard';
 function DashboardScreen({ navigation }) {
   const { user, logout } = useAuth();
   const { colorMode } = useContext(ColorModeContext);
@@ -43,11 +44,10 @@ function DashboardScreen({ navigation }) {
 
   return (
     <>
-
       <AppHeader />
-        <Box flex={1} bg="transparent" borderWidth={0}>
-          <TabHeader title="Inicio de caja" showMenu />
-        </Box>
+      <Box flex={1} bg="transparent" borderWidth={0}>
+        <PendientesEntregaCard />
+      </Box>
     </>
   );
 }

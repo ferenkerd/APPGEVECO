@@ -26,6 +26,8 @@ import AgregarProductosScreen from './screens/AgregarProductosScreen';
 import ProcesarPagoScreen from './screens/ProcesarPagoScreen';
 import CheckoutScreen from './screens/CheckoutScreen';
 import ResumenVentaScreen from './screens/ResumenVentaScreen';
+import OrdenesPendientesEntregaScreen from './screens/OrdenesPendientesEntregaScreen';
+import ConfirmacionOperacionScreen from './screens/ConfirmacionOperacionScreen';
 import DetalleVentaScreen from './screens/DetalleVentaScreen';
 import ToastTestScreen from './screens/ToastTestScreen';
 import TipoCobroScreen from './screens/TipoCobroScreen';
@@ -35,6 +37,7 @@ import * as NavigationBar from 'expo-navigation-bar';
 
 // import BarcodeScannerScreen from './screens/BarcodeScannerScreen';
 import CameraBarcodeScreen from './screens/CameraBarcodeScreen';
+import AdminCobroScreen from './screens/AdminCobroScreen';
 const Stack = createStackNavigator();
 
 import { getPalette } from './styles/theme';
@@ -74,6 +77,8 @@ function AppNavigator() {
   <Stack.Screen name="ProcesarPago" component={ProcesarPagoScreen} options={{ title: 'Procesar Pago', headerShown: true }} />
   <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} options={{ title: 'Checkout', headerShown: true }} />
   <Stack.Screen name="ResumenVenta" component={ResumenVentaScreen} options={{ title: 'Resumen de Venta', headerShown: true }} />
+  <Stack.Screen name="OrdenesPendientesEntrega" component={OrdenesPendientesEntregaScreen} options={{ title: 'Órdenes por entregar', headerShown: true }} />
+  <Stack.Screen name="ConfirmacionOperacion" component={ConfirmacionOperacionScreen} options={{ title: 'Operación enviada', headerShown: false }} />
   <Stack.Screen name="RegisterClient" component={RegisterClientScreen} options={{ title: 'Registrar Cliente', headerShown: true }} />
   <Stack.Screen name="EditarCliente" component={EditarClienteScreen} options={{ title: 'Editar Cliente', headerShown: true }} />
   <Stack.Screen name="AlmacenistaDashboard" component={AlmacenistaDashboard} options={{ headerShown: false }} />
@@ -82,6 +87,8 @@ function AppNavigator() {
   <Stack.Screen name="ToastTest" component={ToastTestScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DetalleVenta" component={DetalleVentaScreen} options={{ title: 'Detalle de Venta', headerShown: true, presentation: 'card' }} />
       <Stack.Screen name="TipoCobro" component={TipoCobroScreen} options={{ title: 'Tipo de cobro', headerShown: false }} />
+      <Stack.Screen name="AdminCobro" component={AdminCobroScreen} options={{ title: 'Administrar Cobro', headerShown: true }} />
+      <Stack.Screen name="AdminCobroScreen" component={AdminCobroScreen} options={{ title: 'Cobro de Orden', headerShown: true }} />
     </Stack.Navigator>
   );
 }
