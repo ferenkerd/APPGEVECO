@@ -25,10 +25,20 @@ export default function CheckoutScreen() {
   // Función para cargar métodos de pago
   const fetchPaymentMethods = async () => {
     setPaymentMethodsError(false);
+    if (!user?.access) {
+      Toast.show({
+        type: 'error',
+        text1: 'Sesión expirada',
+        text2: 'Por favor inicia sesión nuevamente.'
+      });
+      navigation.replace('LoginScreen');
+      return;
+    }
     try {
       const res = await fetch('https://zp5qjj4n-8000.use2.devtunnels.ms/payment-methods/', {
         headers: { Authorization: `Bearer ${user?.access}` },
       });
+      if (!res.ok) throw new Error('No se pudo obtener métodos de pago');
       const data = await res.json();
       setPaymentMethods(data);
       if (!Array.isArray(data) || data.length === 0) {
@@ -39,12 +49,14 @@ export default function CheckoutScreen() {
           text2: 'No hay métodos de pago disponibles. Contacta al administrador.'
         });
       }
-    } catch {
+    } catch (e) {
       setPaymentMethodsError(true);
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'No se pudieron cargar los métodos de pago.'
+        text2: 'No se pudieron cargar los métodos de pago. Puedes volver atrás para intentar de nuevo.',
+        autoHide: false,
+        onPress: () => navigation.goBack()
       });
     }
   };
@@ -140,9 +152,11 @@ export default function CheckoutScreen() {
 
     return (
       <Box flex={1} bg="#fff">
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 24, flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 24, paddingBottom: 56, flexGrow: 1 }} showsVerticalScrollIndicator={false}>
           <Text fontSize={22} fontWeight="bold" mb={12}>Resumen de Operación</Text>
-          <Box bg="#f7f7f7" borderRadius={12} p={14} mb={16}>
+          {/* Tarjeta de resumen similar a AgregarProductosScreen */}
+          <Box bg="#f7f7f7" borderRadius={12} p={16} mb={16}>
+            {/* Cliente */}
             <Text fontWeight="bold" mb={4}>Cliente:</Text>
             {selectedClient ? (
               <VStack mb={8} space="xs">
@@ -163,6 +177,7 @@ export default function CheckoutScreen() {
               <Text mb={8}>No seleccionado</Text>
             )}
             <Divider my={8} />
+            {/* Productos con precio unitario y total */}
             <Text fontWeight="bold" mb={4}>Productos:</Text>
             <VStack space="sm">
               {selectedProducts.map((prod, idx) => {
@@ -171,25 +186,27 @@ export default function CheckoutScreen() {
                 return (
                   <HStack key={idx} justifyContent="space-between" alignItems="center">
                     <Text>{prod.name} x{qty}</Text>
-                    <Text>${(price * qty).toFixed(2)}</Text>
+                    <VStack alignItems="flex-end">
+                      <Text fontSize={13} color="#888">Unit: ${price.toFixed(2)}</Text>
+                      <Text fontWeight="bold">${(price * qty).toFixed(2)}</Text>
+                    </VStack>
                   </HStack>
                 );
               })}
             </VStack>
             <Divider my={8} />
+            {/* Resumen compacto igual a AgregarProductosScreen, al fondo */}
             <HStack justifyContent="space-between" mb={2}>
-              <Text>Subtotal:</Text>
-              <Text>${total}</Text>
+              <Text color="#888">Items / Productos</Text>
+              <Text color="#222">{selectedProducts.reduce((acc, p) => acc + (p.qty || p.quantity || 1), 0)} / {selectedProducts.length}</Text>
             </HStack>
-            {discount > 0 && (
-              <HStack justifyContent="space-between" mb={2}>
-                <Text>Descuento:</Text>
-                <Text color="#43a047">-${discount}</Text>
-              </HStack>
-            )}
             <HStack justifyContent="space-between" mb={2}>
-              <Text fontWeight="bold">Total:</Text>
-              <Text fontWeight="bold">${total - discount}</Text>
+              <Text color="#888">Subtotal</Text>
+              <Text color="#222">${total.toFixed ? total.toFixed(2) : Number(total).toFixed(2)}</Text>
+            </HStack>
+            <HStack justifyContent="space-between" mt={2}>
+              <Text color="#222" fontWeight="bold" fontSize={18}>Total</Text>
+              <Text color="#222" fontWeight="bold" fontSize={18}>${(total - discount).toFixed(2)}</Text>
             </HStack>
           </Box>
           <Text fontWeight="bold" mb={8}>Método de pago</Text>
@@ -212,47 +229,55 @@ export default function CheckoutScreen() {
               mb={12}
               borderRadius={8}
               style={{ paddingVertical: 10, minHeight: 40, width: '100%', borderWidth: 1 }}
-              onPress={fetchPaymentMethods}
+              onPress={() => {
+                setPaymentMethods([]);
+                setPaymentMethod('');
+                fetchPaymentMethods();
+              }}
             >
               <Text color="#f00" fontWeight="bold" fontSize={15} style={{ textAlign: 'center' }}>Reintentar cargar métodos de pago</Text>
             </Button>
           )}
-          {/* Botón de cobro solo visible según modo y rol corregido */}
-          {(((user?.user?.job_position === 4) && paymentMode === 'cashier') ||
-            ((user?.user?.job_position === 1 || user?.user?.job_position === 2) && paymentMode === 'admin')) && (
-            <Button
-              bg="#111"
-              isDisabled={!paymentMethod || loading}
-              onPress={handleConfirm}
-              borderRadius={8}
-              style={{ paddingVertical: 12, minHeight: 44, marginTop: 12, width: '100%', elevation: 2 }}
-            >
-              <Text color="#fff" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Procesando...' : 'Confirmar y Cobrar'}</Text>
-            </Button>
-          )}
-          {/* Cajero en modo admin: solo puede enviar operación al admin */}
-          {user?.user?.job_position === 4 && paymentMode === 'admin' && (
-            <Button
-              bg="#f7b731"
-              isDisabled={loading}
-              onPress={handlePendingOrder}
-              borderRadius={8}
-              style={{ paddingVertical: 12, minHeight: 44, marginTop: 12, width: '100%', elevation: 2 }}
-            >
-              <Text color="#222" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Enviando...' : 'Enviar operación'}</Text>
-            </Button>
-          )}
+          {/* Footer visual para espacio de botones Android */}
+          <Box height={48} />
+          {/* Espaciador visual para botones Android */}
+          {/* Espaciador visual para botones Android */}
+          <Box height={48} bg="#fff" />
+        {(((user?.user?.job_position === 4) && paymentMode === 'cashier') ||
+          ((user?.user?.job_position === 1 || user?.user?.job_position === 2) && paymentMode === 'admin')) && (
           <Button
-            variant="outline"
-            borderColor="#111"
-            mt={16}
+            bg="#111"
+            isDisabled={!paymentMethod || loading}
+            onPress={handleConfirm}
             borderRadius={8}
-            style={{ paddingVertical: 12, minHeight: 44, width: '100%', borderWidth: 1, marginTop: 12 }}
-            onPress={() => navigation.goBack()}
+            style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
           >
-            <Text color="#111" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>Cancelar</Text>
+            <Text color="#fff" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Procesando...' : 'Confirmar y Cobrar'}</Text>
           </Button>
-        </ScrollView>
-      </Box>
+        )}
+        {user?.user?.job_position === 4 && paymentMode === 'admin' && (
+          <Button
+            bg="#f7b731"
+            isDisabled={loading}
+            onPress={handlePendingOrder}
+            borderRadius={8}
+            style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
+          >
+            <Text color="#222" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Enviando...' : 'Enviar operación'}</Text>
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          borderColor="#111"
+          borderRadius={8}
+          style={{ paddingVertical: 12, minHeight: 44, width: '100%', borderWidth: 1 }}
+          onPress={() => navigation.goBack()}
+        >
+          <Text color="#111" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>Cancelar</Text>
+        </Button>
+      </ScrollView>
+      {/* Footer fijo visual para espacio de botones Android */}
+      <Box position="absolute" left={0} right={0} bottom={0} height={48} bg="#fff" pointerEvents="none" />
+    </Box>
     );
-}
+  }
