@@ -581,6 +581,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
                     <Box alignItems="center" justifyContent="center" minWidth={100}>
                       <Box flexDirection="column" alignItems="center" justifyContent="center">
                         <Box flexDirection="row" alignItems="center" mb={2}>
+                          {/* El input de cantidad siempre se muestra, los botones solo si buttonsEnabled */}
                           {buttonsEnabled && (
                             <>
                               {item.qty > 1 ? (
@@ -594,32 +595,34 @@ export default function AgregarProductosScreen({ navigation, route }) {
                                   <MaterialIcons name="delete" size={22} color="#e53935" />
                                 </TouchableOpacity>
                               )}
-                              <FormInput
-                                value={item.qty === 0 ? '' : String(item.qty)}
-                                onChangeText={v => {
-                                  if (!window.qtyTimeouts) window.qtyTimeouts = {};
-                                  if (window.qtyTimeouts[item.id]) clearTimeout(window.qtyTimeouts[item.id]);
-                                  if (v === '' || v === '0') {
-                                    setProducts(products.map(p => p.id === item.id ? { ...p, qty: 0 } : p));
-                                    window.qtyTimeouts[item.id] = setTimeout(() => {
-                                      setProducts(products => products.map(p => p.id === item.id ? { ...p, qty: 1 } : p));
-                                    }, 1000);
-                                    return;
-                                  }
-                                  const val = Math.max(1, parseInt(v.replace(/[^0-9]/g, '')) || 1);
-                                  setProducts(products.map(p => p.id === item.id ? { ...p, qty: val } : p));
-                                }}
-                                keyboardType="numeric"
-                                style={{ minWidth: 48, maxWidth: 70, height: 22, textAlign: 'center', fontWeight: 'bold', fontSize: 15, paddingVertical: 0, paddingHorizontal: 0, borderRadius: 8, textAlignVertical: 'center' }}
-                                backgroundColor={palette.input}
-                                textColor={palette.text}
-                              />
-                              <TouchableOpacity onPress={() => {
-                                setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
-                              }} style={{ paddingHorizontal: 6 }}>
-                                <MaterialIcons name="add-circle-outline" size={22} color="#43a047" />
-                              </TouchableOpacity>
                             </>
+                          )}
+                          <FormInput
+                            value={item.qty === 0 ? '' : String(item.qty)}
+                            onChangeText={v => {
+                              if (!window.qtyTimeouts) window.qtyTimeouts = {};
+                              if (window.qtyTimeouts[item.id]) clearTimeout(window.qtyTimeouts[item.id]);
+                              if (v === '' || v === '0') {
+                                setProducts(products.map(p => p.id === item.id ? { ...p, qty: 0 } : p));
+                                window.qtyTimeouts[item.id] = setTimeout(() => {
+                                  setProducts(products => products.map(p => p.id === item.id ? { ...p, qty: 1 } : p));
+                                }, 1000);
+                                return;
+                              }
+                              const val = Math.max(1, parseInt(v.replace(/[^0-9]/g, '')) || 1);
+                              setProducts(products.map(p => p.id === item.id ? { ...p, qty: val } : p));
+                            }}
+                            keyboardType="numeric"
+                            style={{ minWidth: 48, maxWidth: 70, height: 22, textAlign: 'center', fontWeight: 'bold', fontSize: 15, paddingVertical: 0, paddingHorizontal: 0, borderRadius: 8, textAlignVertical: 'center' }}
+                            backgroundColor={palette.input}
+                            textColor={palette.text}
+                          />
+                          {buttonsEnabled && (
+                            <TouchableOpacity onPress={() => {
+                              setProducts(products.map(p => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+                            }} style={{ paddingHorizontal: 6 }}>
+                              <MaterialIcons name="add-circle-outline" size={22} color="#43a047" />
+                            </TouchableOpacity>
                           )}
                         </Box>
                         <Popover
