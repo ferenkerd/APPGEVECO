@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, VStack, HStack, Button, Input, Text, Divider } from '@gluestack-ui/themed';
+import { Box, VStack, HStack, Button, Input, Text, Divider, Popover } from '@gluestack-ui/themed';
 import { ScrollView } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -9,6 +9,8 @@ import { createSale, registerPayment, getPaymentMode } from '../services/api';
 
 // Recibe los datos de productos, cliente y total por params
 export default function CheckoutScreen() {
+  // Estado para controlar el popover abierto
+  const [openPopoverIdx, setOpenPopoverIdx] = React.useState(null);
   // Métodos de pago dinámicos
   const [paymentMethods, setPaymentMethods] = React.useState([]);
   const navigation = useNavigation();
@@ -26,41 +28,17 @@ export default function CheckoutScreen() {
   const fetchPaymentMethods = async () => {
     setPaymentMethodsError(false);
     if (!user?.access) {
-      Toast.show({
-        type: 'error',
-        text1: 'Sesión expirada',
-        text2: 'Por favor inicia sesión nuevamente.'
-      });
-      navigation.replace('LoginScreen');
       return;
     }
     try {
-      const res = await fetch('https://zp5qjj4n-8000.use2.devtunnels.ms/payment-methods/', {
-        headers: { Authorization: `Bearer ${user?.access}` },
-      });
-      if (!res.ok) throw new Error('No se pudo obtener métodos de pago');
-      const data = await res.json();
-      setPaymentMethods(data);
-      if (!Array.isArray(data) || data.length === 0) {
-        setPaymentMethodsError(true);
-        Toast.show({
-          type: 'info',
-          text1: 'Métodos de pago',
-          text2: 'No hay métodos de pago disponibles. Contacta al administrador.'
-        });
-      }
-    } catch (e) {
+      const methods = await getPaymentMode(user?.access, true); // true para obtener métodos
+      setPaymentMethods(methods?.methods || []);
+    } catch {
       setPaymentMethodsError(true);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'No se pudieron cargar los métodos de pago. Puedes volver atrás para intentar de nuevo.',
-        autoHide: false,
-        onPress: () => navigation.goBack()
-      });
     }
   };
 
+  // useEffect para cargar métodos de pago y modo de pago
   React.useEffect(() => {
     if (user?.access) fetchPaymentMethods();
     const fetchMode = async () => {
@@ -101,7 +79,7 @@ export default function CheckoutScreen() {
         payment_method: paymentMethod, // Ahora es el ID real
         paid_amount: total
       }, user?.access);
-  Toast.show({ type: 'success', text1: 'Operación registrada', text2: 'El pago se realizó correctamente.' });
+      Toast.show({ type: 'success', text1: 'Operación registrada', text2: 'El pago se realizó correctamente.' });
       clearCart();
       navigation.replace('ResumenVenta', {
         venta: sale,
@@ -112,7 +90,7 @@ export default function CheckoutScreen() {
         currency: 'USD',
       });
     } catch (e) {
-  Toast.show({ type: 'error', text1: 'Error', text2: e.message || 'No se pudo registrar la operación.' });
+      Toast.show({ type: 'error', text1: 'Error', text2: e.message || 'No se pudo registrar la operación.' });
     }
     setLoading(false);
   };
@@ -150,14 +128,14 @@ export default function CheckoutScreen() {
     setLoading(false);
   };
 
-    return (
-      <Box flex={1} bg="#fff">
+  return (
+    <Box flex={1} bg="#fff">
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 24, paddingBottom: 56, flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-          <Text fontSize={22} fontWeight="bold" mb={12}>Resumen de Operación</Text>
+          <Text fontSize={22} fontWeight="bold" mb={12} color="#000">Resumen de Operación</Text>
           {/* Tarjeta de resumen similar a AgregarProductosScreen */}
-          <Box bg="#f7f7f7" borderRadius={12} p={16} mb={16}>
+          <Box bg="#f5f6fa" borderRadius={12} p={16} mb={16}>
             {/* Cliente */}
-            <Text fontWeight="bold" mb={4}>Cliente:</Text>
+            <Text fontWeight="bold" color="#111" mb={4}>Cliente</Text>
             {selectedClient ? (
               <VStack mb={8} space="xs">
                 <Text><Text fontWeight="bold">Nombre:</Text> {selectedClient.first_name || selectedClient.nombre || ''} {selectedClient.last_name || ''}</Text>
@@ -166,7 +144,7 @@ export default function CheckoutScreen() {
                 )}
                 {selectedClient.contact_phone && (
                   <Text>
-                    <Text fontWeight="bold">Teléfono:</Text> {selectedClient.prefix && selectedClient.prefix.code ? `+${selectedClient.prefix.code} ` : ''}{selectedClient.contact_phone}
+                    <Text fontWeight="bold">Teléfono:</Text> {selectedClient.prefix && selectedClient.prefix.code ? `${selectedClient.prefix.code}-` : ''}{selectedClient.contact_phone}
                   </Text>
                 )}
                 {selectedClient.address && (
@@ -178,15 +156,64 @@ export default function CheckoutScreen() {
             )}
             <Divider my={8} />
             {/* Productos con precio unitario y total */}
-            <Text fontWeight="bold" mb={4}>Productos:</Text>
+            <Text fontWeight="bold" color="#111" mb={4}>Productos</Text>
             <VStack space="sm">
               {selectedProducts.map((prod, idx) => {
                 const qty = prod.qty || prod.quantity || 1;
                 const price = Number(prod.sale_price || prod.price || 0);
                 return (
                   <HStack key={idx} justifyContent="space-between" alignItems="center">
-                    <Text>{prod.name} x{qty}</Text>
-                    <VStack alignItems="flex-end">
+                    {/* Columna: Nombre del producto (con popover) */}
+                    <Box flex={2} maxWidth={180}>
+                      <Popover
+                        isOpen={openPopoverIdx === idx}
+                        onOpen={() => setOpenPopoverIdx(idx)}
+                        onClose={() => setOpenPopoverIdx(null)}
+                        closeOnBlur={true}
+                        closeOnEsc={true}
+                        trigger={triggerProps => (
+                          <Text
+                            {...triggerProps}
+                            style={{ maxWidth: 180 }}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {prod.name}
+                          </Text>
+                        )}
+                      >
+                        <Popover.Content
+                          style={{
+                            backgroundColor: '#fff',
+                            borderWidth: 1,
+                            borderColor: '#111',
+                            maxWidth: 260,
+                          }}
+                        >
+                          <Popover.Arrow style={{ backgroundColor: '#fff' }} />
+                          <Popover.Body style={{ flexShrink: 1 }}>
+                            <ScrollView
+                              nestedScrollEnabled={true}
+                              contentContainerStyle={{ flexGrow: 1}}
+                              style={{ minHeight: 32, maxHeight: 140, maxWidth: 240 }}
+                            >
+                              <Text
+                                style={{ fontSize: 16, textAlign: 'center', flexWrap: 'wrap' }}
+                                onPress={() => setOpenPopoverIdx(null)}
+                              >
+                                {prod.name}
+                              </Text>
+                            </ScrollView>
+                          </Popover.Body>
+                        </Popover.Content>
+                      </Popover>
+                    </Box>
+                    {/* Columna: Cantidad */}
+                    <Box flex={1} alignItems="center">
+                      <Text fontWeight="bold" color="#222">x{qty}</Text>
+                    </Box>
+                    {/* Columna: Precios */}
+                    <VStack alignItems="flex-end" flex={2}>
                       <Text fontSize={13} color="#888">Unit: ${price.toFixed(2)}</Text>
                       <Text fontWeight="bold">${(price * qty).toFixed(2)}</Text>
                     </VStack>
@@ -197,15 +224,15 @@ export default function CheckoutScreen() {
             <Divider my={8} />
             {/* Resumen compacto igual a AgregarProductosScreen, al fondo */}
             <HStack justifyContent="space-between" mb={2}>
-              <Text color="#888">Items / Productos</Text>
+              <Text color="#000" fontWeight="bold">Items / Productos</Text>
               <Text color="#222">{selectedProducts.reduce((acc, p) => acc + (p.qty || p.quantity || 1), 0)} / {selectedProducts.length}</Text>
             </HStack>
             <HStack justifyContent="space-between" mb={2}>
-              <Text color="#888">Subtotal</Text>
+              <Text color="#000" fontWeight="bold">Subtotal</Text>
               <Text color="#222">${total.toFixed ? total.toFixed(2) : Number(total).toFixed(2)}</Text>
             </HStack>
             <HStack justifyContent="space-between" mt={2}>
-              <Text color="#222" fontWeight="bold" fontSize={18}>Total</Text>
+              <Text color="#000" fontWeight="bold" fontSize={18}>Total</Text>
               <Text color="#222" fontWeight="bold" fontSize={18}>${(total - discount).toFixed(2)}</Text>
             </HStack>
           </Box>
@@ -243,41 +270,42 @@ export default function CheckoutScreen() {
           {/* Espaciador visual para botones Android */}
           {/* Espaciador visual para botones Android */}
           <Box height={48} bg="#fff" />
-        {(((user?.user?.job_position === 4) && paymentMode === 'cashier') ||
-          ((user?.user?.job_position === 1 || user?.user?.job_position === 2) && paymentMode === 'admin')) && (
+          {(((user?.user?.job_position === 4) && paymentMode === 'cashier') ||
+            ((user?.user?.job_position === 1 || user?.user?.job_position === 2) && paymentMode === 'admin')) && (
+            <Button
+              bg="#111"
+              isDisabled={!paymentMethod || loading}
+              onPress={handleConfirm}
+              borderRadius={8}
+              style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
+            >
+              <Text color="#fff" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Procesando...' : 'Confirmar y Cobrar'}</Text>
+            </Button>
+          )}
+          {user?.user?.job_position === 4 && paymentMode === 'admin' && (
+            <Button
+              bg="#f7b731"
+              isDisabled={loading}
+              onPress={handlePendingOrder}
+              borderRadius={8}
+              style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
+            >
+              <Text color="#222" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Enviando...' : 'Enviar operación'}</Text>
+            </Button>
+          )}
           <Button
-            bg="#111"
-            isDisabled={!paymentMethod || loading}
-            onPress={handleConfirm}
+            variant="outline"
+            borderColor="#111"
             borderRadius={8}
-            style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
+            style={{ paddingVertical: 12, minHeight: 44, width: '100%', borderWidth: 1, marginBottom: 48}}
+            onPress={() => navigation.goBack()}
           >
-            <Text color="#fff" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Procesando...' : 'Confirmar y Cobrar'}</Text>
+            <Text color="#111" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>Cancelar</Text>
           </Button>
-        )}
-        {user?.user?.job_position === 4 && paymentMode === 'admin' && (
-          <Button
-            bg="#f7b731"
-            isDisabled={loading}
-            onPress={handlePendingOrder}
-            borderRadius={8}
-            style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
-          >
-            <Text color="#222" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Enviando...' : 'Enviar operación'}</Text>
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          borderColor="#111"
-          borderRadius={8}
-          style={{ paddingVertical: 12, minHeight: 44, width: '100%', borderWidth: 1 }}
-          onPress={() => navigation.goBack()}
-        >
-          <Text color="#111" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>Cancelar</Text>
-        </Button>
-      </ScrollView>
+        </ScrollView>
       {/* Footer fijo visual para espacio de botones Android */}
-      <Box position="absolute" left={0} right={0} bottom={0} height={48} bg="#fff" pointerEvents="none" />
+        <Box position="absolute" left={0} right={0} bottom={0} height={48} bg="#fff" pointerEvents="none"></Box>
+    
     </Box>
-    );
-  }
+  );
+}
