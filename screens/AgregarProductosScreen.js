@@ -17,11 +17,13 @@ import CategoryList from '../components/CategoryList';
 
 // AgregarProductosScreen debe ser un componente funcional
 import { Modal, Animated, Dimensions, TouchableWithoutFeedback, PanResponder, ScrollView } from 'react-native';
-import { SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator } from '@gluestack-ui/themed';
+import { Select, SelectTrigger, SelectItem, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator } from '@gluestack-ui/themed';
 import { apiFetch } from '../services/api';
 
 // AgregarProductosScreen debe ser un componente funcional
 export default function AgregarProductosScreen({ navigation, route }) {
+  // Nuevo: filtro de búsqueda
+  const [searchField, setSearchField] = useState('all'); // 'all', 'name', 'code', 'price', 'category'
   // Estado para activar/desactivar los botones pequeños de suma/resta
   const [buttonsEnabled, setButtonsEnabled] = useState(true);
   // Estado para activar/desactivar swipe
@@ -241,16 +243,35 @@ export default function AgregarProductosScreen({ navigation, route }) {
           const name = (p.name || '').toLowerCase();
           const id = p.id ? p.id.toString() : '';
           const salePrice = p.sale_price ? p.sale_price.toString() : '';
-          return (
-            barcode.includes(query) ||
-            name.includes(query) ||
-            id.includes(query) ||
-            salePrice.includes(query)
-          );
+          const category = (() => {
+            const catId = p.category || p.categoria;
+            if (!catId) return '';
+            if (typeof catId === 'object' && catId.name) return catId.name.toLowerCase();
+            const foundCat = categories.find(c => c.id === catId || c.id === Number(catId));
+            return foundCat ? foundCat.name.toLowerCase() : String(catId);
+          })();
+          if (searchField === 'all') {
+            return (
+              barcode.includes(query) ||
+              name.includes(query) ||
+              id.includes(query) ||
+              salePrice.includes(query) ||
+              category.includes(query)
+            );
+          } else if (searchField === 'name') {
+            return name.includes(query);
+          } else if (searchField === 'code') {
+            return barcode.includes(query) || id.includes(query);
+          } else if (searchField === 'price') {
+            return salePrice.includes(query);
+          } else if (searchField === 'category') {
+            return category.includes(query);
+          }
+          return true;
         })
       );
     }
-  }, [productQuery, allProducts]);
+  }, [productQuery, allProducts, searchField, categories]);
 
   // Eliminar handleManualSearch (ya no se usa MOCK_PRODUCTS)
 
@@ -299,17 +320,61 @@ export default function AgregarProductosScreen({ navigation, route }) {
             </SelectDragIndicatorWrapper>
             <Box style={{ width: '100%', alignSelf: 'center', paddingBottom: 24, position: 'relative', flex: 1 }}>
               <Box px={8} pt={8} style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2, backgroundColor: palette.surface, paddingBottom: 8 }}>
-                <Text fontSize={18} fontWeight="bold" color={palette.text} mt={2} mb={1}>Buscar por nombre, precio o código</Text>
+                {/* Filtro tipo select */}
+                <Box flexDirection="row" alignItems="center" mb={2}>
+                  <Select
+                    selectedValue={searchField}
+                    onValueChange={setSearchField}
+                    accessibilityLabel="Filtrar por"
+                    triggerProps={{ style: { backgroundColor: palette.input, borderRadius: 8, borderWidth: 1, borderColor: palette.primary, height: 40, minWidth: 120, marginRight: 8, paddingHorizontal: 8 } }}
+                  >
+                    <SelectTrigger style={{ backgroundColor: palette.input, borderRadius: 8, borderWidth: 1, borderColor: palette.primary, height: 40, minWidth: 120, paddingHorizontal: 8 }}>
+                      <Text color={palette.primary} fontWeight="bold">
+                        {searchField === 'all' ? 'Todo' :
+                          searchField === 'name' ? 'Nombre' :
+                          searchField === 'code' ? 'Código' :
+                          searchField === 'price' ? 'Precio' :
+                          searchField === 'category' ? 'Categoría' : 'Filtro'}
+                      </Text>
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectBackdrop />
+                      <SelectContent style={{ backgroundColor: palette.surface, borderRadius: 12, width: '100%', maxWidth: '100%', maxHeight: '80%', minHeight: '50%', paddingBottom: 24}}>
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
+                        <Box style={{ width: '100%', maxWidth: '100%', paddingBottom: 24 }}>
+                          <SelectItem label="Todo" value="all" style={{ color: palette.text }} />
+                          <SelectItem label="Nombre" value="name" style={{ color: palette.text }} />
+                          <SelectItem label="Código" value="code" style={{ color: palette.text }} />
+                          <SelectItem label="Precio" value="price" style={{ color: palette.text }} />
+                          <SelectItem label="Categoría" value="category" style={{ color: palette.text }} />
+                        </Box>
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
+                  <Text fontSize={18} fontWeight="bold" color={palette.text} ml={2}>
+                    Buscar
+                  </Text>
+                </Box>
                 <FormInput
-                  placeholder="Buscar producto"
+                  placeholder={
+                    searchField === 'all' ? 'Buscar producto...' :
+                    searchField === 'name' ? 'Buscar por nombre...' :
+                    searchField === 'code' ? 'Buscar por código...' :
+                    searchField === 'price' ? 'Buscar por precio...' :
+                    searchField === 'category' ? 'Buscar por categoría...' :
+                    'Buscar...'
+                  }
                   value={productQuery}
                   onChangeText={setProductQuery}
                   backgroundColor={palette.input}
                   textColor={palette.text}
                   style={{ width: '100%' }}
+                  keyboardType={searchField === 'price' ? 'numeric' : 'default'}
                 />
               </Box>
-              <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, paddingTop: 80, paddingBottom: 100 }}>
+              <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, paddingTop: 110, paddingBottom: 100 }}>
                 <Box px={8} pt={16} pb={80}>
                   {filteredProducts.length === 0 ? (
                     <Text color={palette.text} textAlign="center" mt={4}>No hay productos disponibles.</Text>
