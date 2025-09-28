@@ -1,5 +1,6 @@
 import React, { useState, useContext, useCallback, useRef } from 'react';
 import { Box, VStack, HStack, Text, Button, FlatList, Popover, Switch } from '@gluestack-ui/themed';
+import { Input, InputField } from '@gluestack-ui/themed';
 import { Swipeable } from 'react-native-gesture-handler';
 import { TouchableOpacity, View, SafeAreaView, Platform } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native';
@@ -301,7 +302,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
     <Box flex={1} bg={palette.surface} padding={16}>
       {/* Contenido principal, con padding abajo para la barra y la tarjeta fija */}
       <VStack space="md" alignItems="flex-start" width="100%" style={{ paddingBottom: 200 }}>
-        <Text fontSize={22} fontWeight="bold" color={palette.text} mb={2} textAlign="left">
+        <Text fontSize={22} fontWeight="bold" color={palette.text} mb={4} textAlign="left">
           Agregar Productos
         </Text>
         {/* Botón para abrir el Sheet */}
@@ -320,61 +321,60 @@ export default function AgregarProductosScreen({ navigation, route }) {
             </SelectDragIndicatorWrapper>
             <Box style={{ width: '100%', alignSelf: 'center', paddingBottom: 24, position: 'relative', flex: 1 }}>
               <Box px={8} pt={8} style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2, backgroundColor: palette.surface, paddingBottom: 8 }}>
-                {/* Filtro tipo select */}
-                <Box flexDirection="row" alignItems="center" mb={2}>
-                  <Select
-                    selectedValue={searchField}
-                    onValueChange={setSearchField}
-                    accessibilityLabel="Filtrar por"
-                    triggerProps={{ style: { backgroundColor: palette.input, borderRadius: 8, borderWidth: 1, borderColor: palette.primary, height: 40, minWidth: 120, marginRight: 8, paddingHorizontal: 8 } }}
-                  >
-                    <SelectTrigger style={{ backgroundColor: palette.input, borderRadius: 8, borderWidth: 1, borderColor: palette.primary, height: 40, minWidth: 120, paddingHorizontal: 8 }}>
-                      <Text color={palette.primary} fontWeight="bold">
-                        {searchField === 'all' ? 'Todo' :
-                          searchField === 'name' ? 'Nombre' :
-                          searchField === 'code' ? 'Código' :
-                          searchField === 'price' ? 'Precio' :
-                          searchField === 'category' ? 'Categoría' : 'Filtro'}
-                      </Text>
-                    </SelectTrigger>
-                    <SelectPortal>
-                      <SelectBackdrop />
-                      <SelectContent style={{ backgroundColor: palette.surface, borderRadius: 12, width: '100%', maxWidth: '100%', maxHeight: '80%', minHeight: '50%', paddingBottom: 24}}>
-                        <SelectDragIndicatorWrapper>
-                          <SelectDragIndicator />
-                        </SelectDragIndicatorWrapper>
-                        <Box style={{ width: '100%', maxWidth: '100%', paddingBottom: 24 }}>
-                          <SelectItem label="Todo" value="all" style={{ color: palette.text }} />
-                          <SelectItem label="Nombre" value="name" style={{ color: palette.text }} />
-                          <SelectItem label="Código" value="code" style={{ color: palette.text }} />
-                          <SelectItem label="Precio" value="price" style={{ color: palette.text }} />
-                          <SelectItem label="Categoría" value="category" style={{ color: palette.text }} />
-                        </Box>
-                      </SelectContent>
-                    </SelectPortal>
-                  </Select>
-                  <Text fontSize={18} fontWeight="bold" color={palette.text} ml={2}>
-                    Buscar
-                  </Text>
+                <Text fontSize={18} fontWeight="bold" color={palette.text} mb={6} style={{ textAlign: 'left' }}>Buscar producto</Text>
+                <Box flexDirection="row" alignItems="center" mb={2} style={{ gap: 12 }}>
+                  <Box style={{ width: 44, minWidth: 44, maxWidth: 44, marginRight: 8 }}>
+                    <Select
+                      selectedValue={searchField}
+                      onValueChange={setSearchField}
+                      accessibilityLabel="Filtrar por"
+                      triggerProps={{ style: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e0e0e0', height: 44, justifyContent: 'center', alignItems: 'center', padding: 0 } }}
+                    >
+                      <SelectTrigger style={{ backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e0e0e0', height: 44, justifyContent: 'center', alignItems: 'center', padding: 0 }}>
+                        <MaterialIcons name="filter-list" size={26} color="#111" />
+                      </SelectTrigger>
+                      <SelectPortal>
+                        <SelectBackdrop />
+                        <SelectContent style={{ backgroundColor: '#fff', borderRadius: 12, width: '100%', maxWidth: '100%', maxHeight: '80%', minHeight: '50%', paddingBottom: 24}}>
+                          <SelectDragIndicatorWrapper>
+                            <SelectDragIndicator />
+                          </SelectDragIndicatorWrapper>
+                          <Box style={{ width: '100%', maxWidth: '100%', paddingBottom: 24 }}>
+                            <SelectItem label="Todo" value="all" style={{ color: '#111' }} />
+                            <SelectItem label="Nombre" value="name" style={{ color: '#111' }} />
+                            <SelectItem label="Código" value="code" style={{ color: '#111' }} />
+                            <SelectItem label="Precio" value="price" style={{ color: '#111' }} />
+                            <SelectItem label="Categoría" value="category" style={{ color: '#111' }} />
+                          </Box>
+                        </SelectContent>
+                      </SelectPortal>
+                    </Select>
+                  </Box>
+                  <Box style={{ flex: 1 }}>
+                    <Input bg="#f5f5f5" borderRadius={12} style={{ borderWidth: 1, borderColor: '#e0e0e0', width: '100%', height: 44, paddingRight: 36 }}>
+                      <InputField
+                        placeholder={
+                          searchField === 'all' ? 'Buscar producto...' :
+                          searchField === 'name' ? 'Buscar por nombre...' :
+                          searchField === 'code' ? 'Buscar por código...' :
+                          searchField === 'price' ? 'Buscar por precio...' :
+                          searchField === 'category' ? 'Buscar por categoría...' :
+                          'Buscar...'
+                        }
+                        value={productQuery}
+                        onChangeText={setProductQuery}
+                        autoCorrect={false}
+                        autoCapitalize="none"
+                        keyboardType={searchField === 'price' ? 'numeric' : 'default'}
+                        style={{ paddingRight: 36 }}
+                      />
+                      {/* Si quieres el icono de búsqueda, descomenta la línea siguiente: */}
+                      {/* <Icon as={SearchIcon} size="md" color="#888" style={{ position: 'absolute', right: 12, top: '50%', transform: [{ translateY: -9 }] }} /> */}
+                    </Input>
+                  </Box>
                 </Box>
-                <FormInput
-                  placeholder={
-                    searchField === 'all' ? 'Buscar producto...' :
-                    searchField === 'name' ? 'Buscar por nombre...' :
-                    searchField === 'code' ? 'Buscar por código...' :
-                    searchField === 'price' ? 'Buscar por precio...' :
-                    searchField === 'category' ? 'Buscar por categoría...' :
-                    'Buscar...'
-                  }
-                  value={productQuery}
-                  onChangeText={setProductQuery}
-                  backgroundColor={palette.input}
-                  textColor={palette.text}
-                  style={{ width: '100%' }}
-                  keyboardType={searchField === 'price' ? 'numeric' : 'default'}
-                />
               </Box>
-              <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, paddingTop: 110, paddingBottom: 100 }}>
+              <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, paddingTop: 80, paddingBottom: 100 }}>
                 <Box px={8} pt={16} pb={80}>
                   {filteredProducts.length === 0 ? (
                     <Text color={palette.text} textAlign="center" mt={4}>No hay productos disponibles.</Text>
