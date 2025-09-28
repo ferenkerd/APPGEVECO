@@ -1,6 +1,6 @@
 import React from 'react';
 import { Input, InputField, InputIcon, InputSlot, Text } from '@gluestack-ui/themed';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 export function FormInput({
   label,
@@ -12,6 +12,7 @@ export function FormInput({
   style,
   backgroundColor = '#fff',
   textColor = '#111',
+  onIconPress,
   ...props
 }) {
   return (
@@ -31,8 +32,10 @@ export function FormInput({
           {...props}
         />
         {icon && (
-          <InputSlot>
-            <InputIcon as={icon} />
+          <InputSlot style={{ paddingRight: 10 }}>
+            <TouchableOpacity onPress={onIconPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <InputIcon as={icon} />
+            </TouchableOpacity>
           </InputSlot>
         )}
       </Input>
