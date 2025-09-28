@@ -15,13 +15,21 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose, allPr
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setBarcode(data);
-    // Buscar producto por code o barcode
+    // Si no se pasan productos, se asume modo registro (almacenista)
+    const isRegistroNuevo = !allProducts || allProducts.length === 0;
+
+    if (isRegistroNuevo) {
+      // Modo almacenista: colocar código y cerrar modal automáticamente
+      if (onScanned) onScanned(data);
+      if (onClose) setTimeout(onClose, 250); // Pequeño delay para UX
+      return;
+    }
+    // Modo cajero: buscar producto y seguir flujo normal
     const product = allProducts.find(p => (p.code || p.barcode) === data);
     setFoundProduct(product || null);
+    // Vibración y beep si existe producto
     if (product) {
-      // Vibración
       try { await Haptics.selectionAsync(); } catch {}
-      // Sonido beep clásico
       try {
         const { sound } = await Audio.Sound.createAsync(
           require('../assets/beep.mp3'),
@@ -32,6 +40,8 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose, allPr
         });
       } catch {}
     }
+    // Siempre colocar el código en el input aunque no exista producto
+    if (onScanned) onScanned(data);
     // Ya no se cierra el modal automáticamente
   };
 
