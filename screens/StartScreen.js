@@ -41,7 +41,7 @@ const StartScreen = ({ navigation }) => {
           resizeMode="contain"
           alt="Logo Keylimar"
         />
-  <Text style={[startStyles.title, { color: palette.text }]}>¡Bienvenido al sistema de gestión de Abasto Keylimar!</Text>
+  <Text style={[startStyles.title, { color: palette.text }]}>¡Bienvenido al sistema de gestión del Abasto Keylimar!</Text>
   <Text style={[startStyles.subtitle, { color: palette.textSecondary }]}>Tu herramienta para un control eficiente y ventas más rápidas.</Text>
         <VStack space="md" width="100%" alignItems="center">
           <CustomButton
