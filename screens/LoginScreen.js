@@ -3,7 +3,7 @@ import { devLog } from '../utils/logger';
 //
 import React, { useState, useEffect, useContext } from 'react';
 import Toast from 'react-native-toast-message';
-import { ActivityIndicator, SafeAreaView } from 'react-native';
+import { ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../context/AuthContext';
 import { Box, Image } from '@gluestack-ui/themed';
@@ -93,58 +93,69 @@ const LoginScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>
       <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
-      {/* Fondo bajo el status bar para edge-to-edge */}
-      <Box style={{ height: 32, backgroundColor: palette.background, width: '100%' }} />
-      <Box style={[loginStyles.container, { backgroundColor: palette.background, flex: 1, justifyContent: 'center', paddingBottom: 24 }]}> 
-        <Card style={{
-          ...loginStyles.card,
-          backgroundColor: colorMode === 'dark' ? '#111' : '#fff',
-        }}>
-          <VStack space="xl" alignItems="center" justifyContent="center">
-            <Image
-              source={colorMode === 'dark' ? require('../assets/logo-dark.png') : require('../assets/logo.png')}
-              style={loginStyles.logo}
-              resizeMode="contain"
-              alt="Logo Keylimar"
-            />
-            <Heading style={[loginStyles.heading, { color: colorMode === 'dark' ? '#fff' : '#111' }]}>Inicio de Sesión</Heading>
-            <VStack space="xs" width="100%">
-              <Text style={{ color: colorMode === 'dark' ? '#fff' : palette.textSecondary }}>Usuario</Text>
-              <FormInput
-                value={username}
-                onChangeText={setUsername}
-                placeholder="Usuario"
-                autoCapitalize="none"
-                editable={!submitting}
-                style={{ minWidth: 250 }}
-              />
-            </VStack>
-            <VStack space="xs" width="100%">
-              <Text style={{ color: colorMode === 'dark' ? '#fff' : palette.textSecondary }}>Contraseña</Text>
-              <FormInput
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Contraseña"
-                secureTextEntry={!showPassword}
-                editable={!submitting}
-                icon={showPassword ? EyeIcon : EyeOffIcon}
-                style={{ minWidth: 250 }}
-                // Opción para mostrar/ocultar contraseña
-                onIconPress={() => setShowPassword((v) => !v)}
-              />
-            </VStack>
-            <CustomButton
-              style={{ width: '100%', marginTop: 12 }}
-              backgroundColor={colorMode === 'dark' ? '#fff' : '#111'}
-              textColor={colorMode === 'dark' ? '#111' : '#fff'}
-              onPress={handleLogin}
-              disabled={submitting}
-            >
-              {submitting ? 'Ingresando...' : 'Ingresar'}
-            </CustomButton>
-          </VStack>
-  </Card>
-      </Box>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Fondo bajo el status bar para edge-to-edge */}
+          <Box style={{ height: 32, backgroundColor: palette.background, width: '100%' }} />
+          <Box style={[loginStyles.container, { backgroundColor: palette.background, paddingBottom: 24 }]}> 
+            <Card style={{
+              ...loginStyles.card,
+              backgroundColor: colorMode === 'dark' ? '#111' : '#fff',
+            }}>
+              <VStack space="xl" alignItems="center" justifyContent="center">
+                <Image
+                  source={colorMode === 'dark' ? require('../assets/logo-dark.png') : require('../assets/logo.png')}
+                  style={loginStyles.logo}
+                  resizeMode="contain"
+                  alt="Logo Keylimar"
+                />
+                <Heading style={[loginStyles.heading, { color: colorMode === 'dark' ? '#fff' : '#111' }]}>Inicio de Sesión</Heading>
+                <VStack space="xs" width="100%">
+                  <Text style={{ color: colorMode === 'dark' ? '#fff' : palette.textSecondary }}>Usuario</Text>
+                  <FormInput
+                    value={username}
+                    onChangeText={setUsername}
+                    placeholder="Usuario"
+                    autoCapitalize="none"
+                    editable={!submitting}
+                    style={{ minWidth: 250 }}
+                  />
+                </VStack>
+                <VStack space="xs" width="100%">
+                  <Text style={{ color: colorMode === 'dark' ? '#fff' : palette.textSecondary }}>Contraseña</Text>
+                  <FormInput
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Contraseña"
+                    secureTextEntry={!showPassword}
+                    editable={!submitting}
+                    icon={showPassword ? EyeIcon : EyeOffIcon}
+                    style={{ minWidth: 250 }}
+                    // Opción para mostrar/ocultar contraseña
+                    onIconPress={() => setShowPassword((v) => !v)}
+                  />
+                </VStack>
+                <CustomButton
+                  style={{ width: '100%', marginTop: 12 }}
+                  backgroundColor={colorMode === 'dark' ? '#fff' : '#111'}
+                  textColor={colorMode === 'dark' ? '#111' : '#fff'}
+                  onPress={handleLogin}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Ingresando...' : 'Ingresar'}
+                </CustomButton>
+              </VStack>
+            </Card>
+          </Box>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
