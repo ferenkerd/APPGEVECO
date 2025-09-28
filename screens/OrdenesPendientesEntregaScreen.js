@@ -55,50 +55,100 @@ export default function OrdenesPendientesEntregaScreen() {
     );
   }
 
+
   return (
-    <Box flex={1} bg="#fff">
-      <ScrollView
-        contentContainerStyle={{ padding: 16, flexGrow: 1 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        <Text fontWeight="bold" fontSize={22} mb={12} color="#b8860b">Órdenes por entregar</Text>
-        {!Array.isArray(ventas) ? (
-          <Text color="#c00" fontSize={12}>Error: ventas no es un array. Valor: {JSON.stringify(ventas)}</Text>
-        ) : ventas.length === 0 ? (
-          <Text color="#888">No hay ventas pagadas y no entregadas.</Text>
-        ) : (
-          <VStack space="md">
-            {ventas.map((venta) => (
-              <Pressable
-                key={venta.id}
-                onPress={() => navigation.navigate('ResumenVenta', {
-                  venta,
-                  ventaId: venta.id,
-                  id: venta.id,
-                  client: venta.client,
-                  products: venta.details || [],
-                  total: venta.total_amount,
-                  paymentType: venta.payment_type,
-                  currency: venta.currency,
-                  paymentMethods: venta.payment_methods || [],
-                  fromPendientesEntrega: true
-                })}
-                style={{ width: '100%' }}
-              >
-                <Box bg="#fffbe6" borderRadius={12} p={16} mb={4} shadow={1}>
-                  <HStack justifyContent="space-between" alignItems="center">
-                    <Text color="#111" fontWeight="bold">Venta #{venta.id}</Text>
-                    <Text color="#888">${venta.total_amount}</Text>
-                  </HStack>
-                  <Text color="#888" fontSize={13} mt={2}>
-                    Cliente: {venta.client && typeof venta.client === 'object' ? `${venta.client.first_name || ''} ${venta.client.last_name || ''}` : (venta.client_name || venta.client || '')}
-                  </Text>
-                </Box>
-              </Pressable>
-            ))}
-          </VStack>
-        )}
-      </ScrollView>
+    <Box flex={1} bg="#f4f4f4">
+      <Box flex={1}>
+        <ScrollView
+          contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          <Text fontWeight="bold" fontSize={24} mb={12} color="#111" accessibilityRole="header">
+            Órdenes pendientes de entregar
+          </Text>
+          {!Array.isArray(ventas) ? (
+            <Text color="#c00" fontSize={12}>Error: ventas no es un array. Valor: {JSON.stringify(ventas)}</Text>
+          ) : ventas.length === 0 ? (
+            <Box alignItems="center" mt={32}>
+              <Text color="#888" fontSize={17} textAlign="center" mb={2}>
+                No tienes ventas pagadas pendientes de entrega.
+              </Text>
+              <Text color="#111" fontSize={13} textAlign="center">
+                Cuando un cliente pague, aparecerá aquí para que puedas entregarlo.
+              </Text>
+            </Box>
+          ) : (
+            <VStack space="md">
+              {ventas.map((venta) => (
+                <Pressable
+                  key={venta.id}
+                  onPress={() => navigation.navigate('ResumenVenta', {
+                    venta,
+                    ventaId: venta.id,
+                    id: venta.id,
+                    client: venta.client,
+                    products: venta.details || [],
+                    total: venta.total_amount,
+                    paymentType: venta.payment_type,
+                    currency: venta.currency,
+                    paymentMethods: venta.payment_methods || [],
+                    fromPendientesEntrega: true
+                  })}
+                  style={{ width: '100%' }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver detalles de la venta #${venta.id}`}
+                >
+                  <Box bg="#fff" borderRadius={14} p={18} mb={6} shadow={2} borderWidth={1} borderColor="#111">
+                    <HStack justifyContent="space-between" alignItems="center">
+                      <Text color="#111" fontWeight="bold" fontSize={17}>Venta #{venta.id}</Text>
+                      <Text color="#111" fontWeight="bold" fontSize={16}>${venta.total_amount}</Text>
+                    </HStack>
+                    <Text color="#888" fontSize={14} mt={2}>
+                      Cliente: {venta.client && typeof venta.client === 'object' ? `${venta.client.first_name || ''} ${venta.client.last_name || ''}` : (venta.client_name || venta.client || '')}
+                    </Text>
+                    <Text color="#888" fontSize={13} mt={1}>
+                      Fecha: {(() => {
+                        const rawDate = venta.sale_date || venta.created_at || venta.fecha || '';
+                        if (!rawDate) return 'Sin fecha';
+                        const d = new Date(rawDate);
+                        return isNaN(d) ? rawDate : d.toLocaleString();
+                      })()}
+                    </Text>
+                    <Box mt={2} width="100%" alignItems="center">
+                      <Pressable
+                        onPress={() => navigation.navigate('ResumenVenta', {
+                          venta,
+                          ventaId: venta.id,
+                          id: venta.id,
+                          client: venta.client,
+                          products: venta.details || [],
+                          total: venta.total_amount,
+                          paymentType: venta.payment_type,
+                          currency: venta.currency,
+                          paymentMethods: venta.payment_methods || [],
+                          fromPendientesEntrega: true
+                        })}
+                        bg="#111"
+                        borderRadius={8}
+                        px={18}
+                        py={10}
+                        alignItems="center"
+                        justifyContent="center"
+                        accessibilityLabel={`Ver y marcar como entregada venta #${venta.id}`}
+                        style={{ width: '100%' }}
+                      >
+                        <Text color="#fff" fontWeight="bold" fontSize={14}>Ver y marcar como entregada</Text>
+                      </Pressable>
+                    </Box>
+                  </Box>
+                </Pressable>
+              ))}
+            </VStack>
+          )}
+        </ScrollView>
+      </Box>
+      {/* Footer fijo */}
+  <Box height={48} width="100%" bg="#f4f4f4" />
     </Box>
   );
 }

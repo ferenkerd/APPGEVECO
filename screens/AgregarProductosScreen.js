@@ -830,42 +830,24 @@ export default function AgregarProductosScreen({ navigation, route }) {
           </HStack>
           <Button
             mt={4}
-            bg={isPressingPay ? palette.secondary : palette.primary}
+            bg={palette.primary}
             width="100%"
             isDisabled={products.length === 0}
             style={{ borderRadius: 8, marginTop: 16, alignSelf: 'center' }}
-            onPressIn={() => {
-              setIsPressingPay(true);
+            onPress={() => {
               setOpenPopoverIndex(null); // Cierra cualquier popover abierto
-              let count = 3;
-              setPressCountPay(count);
-              pressIntervalPay.current = setInterval(() => {
-                count--;
-                setPressCountPay(count);
-                if (count === 0) {
-                  clearInterval(pressIntervalPay.current);
-                  setIsPressingPay(false);
-                  // Calcular subtotal y descuento si aplica
-                  const subtotal = products.reduce((acc, p) => acc + (p.sale_price || p.price || 0) * (p.qty || p.quantity || 1), 0);
-                  // Aquí podrías calcular el descuento real si tienes lógica
-                  const discount = 0; // Ajusta si tienes lógica de descuento
-                  navigation.navigate('CheckoutScreen', {
-                    selectedClient: client,
-                    selectedProducts: products,
-                    total: subtotal,
-                    discount,
-                  });
-                }
-              }, 1000);
-            }}
-            onPressOut={() => {
-              setIsPressingPay(false);
-              setPressCountPay(3);
-              if (pressIntervalPay.current) clearInterval(pressIntervalPay.current);
+              const subtotal = products.reduce((acc, p) => acc + (p.sale_price || p.price || 0) * (p.qty || p.quantity || 1), 0);
+              const discount = 0; // Ajusta si tienes lógica de descuento
+              navigation.navigate('CheckoutScreen', {
+                selectedClient: client,
+                selectedProducts: products,
+                total: subtotal,
+                discount,
+              });
             }}
           >
             <Text color="#fff" fontWeight="bold" fontSize={16}>
-              {isPressingPay ? ('Soltar en ' + pressCountPay + 's') : 'Procesar Pago'}
+              Procesar Pago
             </Text>
           </Button>
         </Box>

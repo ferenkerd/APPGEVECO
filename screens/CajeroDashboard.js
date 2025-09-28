@@ -37,16 +37,33 @@ function OtrosProductosScreen() {
 
 // Dashboard como pantalla/tab
 import PendientesEntregaCard from '../components/PendientesEntregaCard';
+import { ScrollView, RefreshControl } from 'react-native';
 function DashboardScreen({ navigation }) {
   const { user, logout } = useAuth();
   const { colorMode } = useContext(ColorModeContext);
   const palette = getPalette(colorMode);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const pendientesRef = React.useRef();
+
+  // Función para refrescar la card
+  const onRefresh = async () => {
+    setRefreshing(true);
+    if (pendientesRef.current && pendientesRef.current.refetch) {
+      await pendientesRef.current.refetch();
+    }
+    setRefreshing(false);
+  };
 
   return (
     <>
       <AppHeader />
       <Box flex={1} bg="transparent" borderWidth={0}>
-        <PendientesEntregaCard />
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          <PendientesEntregaCard ref={pendientesRef} />
+        </ScrollView>
       </Box>
     </>
   );

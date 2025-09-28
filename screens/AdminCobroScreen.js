@@ -15,7 +15,8 @@ export default function AdminCobroScreen() {
   const { colorMode } = useContext(ColorModeContext);
   const palette = getPalette(colorMode);
   const [paymentMethods, setPaymentMethods] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState('');
+  // Si viene paymentType (del cajero), usarlo como valor inicial
+  const [paymentMethod, setPaymentMethod] = useState(paymentType || '');
   const [loading, setLoading] = useState(false);
   const [openPopoverIdx, setOpenPopoverIdx] = useState(null);
   const [paymentMethodsError, setPaymentMethodsError] = useState(false);
@@ -40,26 +41,52 @@ export default function AdminCobroScreen() {
     return recibido > totalNum ? (recibido - totalNum).toFixed(2) : '';
   };
 
+  // Estado para evitar doble envío
+  const [submitted, setSubmitted] = useState(false);
+
   const handleCobrar = async () => {
-    if (!paymentMethod || !montoRecibido) {
+    if (loading || submitted) return; // Protección doble
+    // Si el admin no selecciona método de pago, usar el que viene de paymentType
+    const metodoFinal = paymentMethod || paymentType || '';
+    const recibido = Number(montoRecibido) || 0;
+    const totalNum = Number(total) || 0;
+    if (!metodoFinal || !montoRecibido) {
       Toast.show({ type: 'error', text1: 'Completa todos los campos' });
       return;
     }
+    if (recibido < totalNum) {
+      Toast.show({ type: 'error', text1: 'El monto recibido no puede ser menor al total a pagar.' });
+      return;
+    }
     setLoading(true);
+    setSubmitted(true);
     try {
-      await approveSale(venta.id, { payment_method: paymentMethod, paid_amount: Number(montoRecibido), change: vuelto() }, venta.access);
+      console.log('[DEBUG] Iniciando registro de pago y aprobación', { venta, metodoFinal, recibido });
+      // Registrar el pago (esto ya cambia el estado a 'paid')
+      const pagoResp = await registerPayment({
+        sale: venta.id,
+        payment_method: metodoFinal,
+        paid_amount: recibido
+      }, venta.access);
+      console.log('[DEBUG] Pago registrado:', pagoResp);
       Toast.show({ type: 'success', text1: 'Venta cobrada correctamente' });
       navigation.replace('ResumenVenta', {
-        venta: { ...venta, status: 'paid', payment_method: paymentMethod },
+        venta: { ...venta, status: 'paid', payment_method: metodoFinal },
         client,
         products,
         total,
-        paymentType: paymentMethod,
+        paymentType: metodoFinal,
         currency: currency || 'USD',
         paymentMethods,
       });
     } catch (e) {
-      Toast.show({ type: 'error', text1: 'Error', text2: e.message || 'No se pudo cobrar la venta.' });
+      console.log('[DEBUG] Error en cobro/approval:', e, e?.response || e?.message);
+      let errorMsg = e?.message || 'No se pudo cobrar la venta.';
+      if (e?.response && typeof e.response === 'object') {
+        errorMsg = JSON.stringify(e.response);
+      }
+      Toast.show({ type: 'error', text1: 'Error', text2: errorMsg });
+      setSubmitted(false); // Permitir reintentar si hay error
     }
     setLoading(false);
   };
@@ -245,12 +272,19 @@ export default function AdminCobroScreen() {
         </Box>
         <Button
           bg="#111"
-          isDisabled={!paymentMethod || !montoRecibido || loading || paymentMethods.length === 0}
+          isDisabled={
+            !paymentMethod ||
+            !montoRecibido ||
+            loading ||
+            submitted ||
+            paymentMethods.length === 0 ||
+            (Number(montoRecibido) < Number(total))
+          }
           onPress={handleCobrar}
           borderRadius={8}
           style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
         >
-          <Text color="#fff" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Procesando...' : 'Aceptar y Cobrar'}</Text>
+          <Text color="#fff" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading || submitted ? 'Procesando...' : 'Aceptar y Cobrar'}</Text>
         </Button>
         <Button
           variant="outline"

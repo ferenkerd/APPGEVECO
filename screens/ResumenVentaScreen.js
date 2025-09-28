@@ -7,11 +7,16 @@ import { approveSale, rejectSale, deliverSale } from '../services/api';
 import Toast from 'react-native-toast-message';
 import { TextInput } from 'react-native';
 
+import { ScrollView } from 'react-native';
+
 export default function ResumenVentaScreen({ navigation, route }) {
   const { venta, client, products, total, paymentType, currency, paymentMethods, fromPendientesEntrega } = route.params;
+  console.log('ResumenVentaScreen params:', route.params);
   const { colorMode } = useContext(ColorModeContext);
   const palette = getPalette(colorMode);
-  const fecha = venta?.created_at ? new Date(venta.created_at) : new Date();
+  // Unificar lógica de fecha con la de las cards
+  const rawDate = venta?.sale_date || venta?.created_at || venta?.fecha || '';
+  const fecha = rawDate ? new Date(rawDate) : new Date();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [change, setChange] = useState(''); // Para input de vueltos
@@ -63,7 +68,25 @@ export default function ResumenVentaScreen({ navigation, route }) {
     try {
       await deliverSale(venta.id, user.access);
       Toast.show({ type: 'success', text1: 'Venta entregada', text2: 'La venta fue marcada como entregada.' });
-      navigation.navigate('OrdenesPendientesEntrega');
+      // Si viene de pendientes, volver a la lista limpiando el stack
+      if (fromPendientesEntrega) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'CajeroDashboard' }],
+        });
+      } else {
+        // Al volver, pasar el método de pago igual que en admin
+        navigation.replace('ResumenVenta', {
+          venta: { ...venta, delivery_status: 'delivered' },
+          client,
+          products,
+          total,
+          paymentType: venta?.payment_method?.id || venta?.payment_method || venta?.payment?.payment_method?.id || venta?.payment?.payment_method || paymentType,
+          currency,
+          paymentMethods,
+          fromPendientesEntrega,
+        });
+      }
     } catch (e) {
       Toast.show({ type: 'error', text1: 'Error', text2: e.message || 'No se pudo marcar como entregada.' });
     }
@@ -71,21 +94,22 @@ export default function ResumenVentaScreen({ navigation, route }) {
   };
 
   return (
-    <Box flex={1} bg={palette.surface} padding={16} justifyContent="center">
-      <VStack space="md" alignItems="center" width="100%">
-        <Text fontSize={22} fontWeight="bold" color={palette.text} mb={2} textAlign="center">
-          Recibo de Operación
-        </Text>
-        <Text color={palette.text} fontSize={15} mb={1}>Operación N°: {venta?.id || '--'}</Text>
-        <Text color={palette.text} fontSize={15} mb={1}>Fecha: {fecha.toLocaleString()}</Text>
-        <Divider my={2} width="100%" />
-        <Text color={palette.text} fontWeight="bold" mb={1}>Cliente</Text>
-        <Text color={palette.text}>{client?.first_name} {client?.last_name} ({client?.id})</Text>
-        {client?.identity_card && <Text color={palette.text}>Cédula: {client.identity_card}</Text>}
-        {client?.contact_phone && <Text color={palette.text}>Tel: {client.prefix?.code ? `+${client.prefix.code} ` : ''}{client.contact_phone}</Text>}
-        <Divider my={2} width="100%" />
-        <Text color={palette.text} fontWeight="bold" mb={1}>Productos</Text>
-        <VStack width="100%" space="xs">
+    <Box flex={1} bg={palette.surface}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 56, flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <VStack space="md" alignItems="center" width="100%">
+          <Text fontSize={22} fontWeight="bold" color={palette.text} mb={2} textAlign="center" accessibilityRole="header">
+            Comprobante de Operación
+          </Text>
+    <Text color={palette.text} fontSize={15} mb={1}>Operación N°: {venta?.id || '--'}</Text>
+    <Text color={palette.text} fontSize={15} mb={1}>Fecha: {rawDate ? fecha.toLocaleString() : 'Sin fecha'}</Text>
+    <Divider my={2} width="100%" />
+    <Text color={palette.primary} fontWeight="bold" fontSize={16} mb={1} mt={2} accessibilityRole="header">Cliente</Text>
+    <Text color={palette.text}>{client?.first_name} {client?.last_name} ({client?.id})</Text>
+    {client?.identity_card && <Text color={palette.text}>Cédula: {client.identity_card}</Text>}
+    {client?.contact_phone && <Text color={palette.text}>Tel: {client.prefix?.code ? `+${client.prefix.code} ` : ''}{client.contact_phone}</Text>}
+    <Divider my={2} width="100%" />
+    <Text color={palette.primary} fontWeight="bold" fontSize={16} mb={1} mt={2} accessibilityRole="header">Productos</Text>
+    <VStack width="100%" space="xs">
           {products.map((p, idx) => {
             const qty = p.qty || p.quantity || p.product_quantity || 1;
             const productName = p.name || p.product_name || p.nombre || p.product?.name || p.product?.product_name || p.product?.nombre || '';
@@ -110,30 +134,54 @@ export default function ResumenVentaScreen({ navigation, route }) {
           })}
         </VStack>
         <Divider my={2} width="100%" />
+        <Text color={palette.primary} fontWeight="bold" fontSize={16} mb={1} mt={2} accessibilityRole="header">Totales</Text>
         <HStack justifyContent="space-between" width="100%">
           <Text color={palette.text}>Total:</Text>
           <Text color={palette.text} fontWeight="bold">${total}</Text>
         </HStack>
         <HStack justifyContent="space-between" width="100%">
           <Text color={palette.text}>Método de pago:</Text>
-          <Text color={palette.text}>{(() => {
-            if (typeof paymentType === 'object' && paymentType?.name) return paymentType.name;
-            if (paymentType === 'cash') return 'Efectivo';
-            if (paymentType === 'card') return 'Tarjeta';
-            if (paymentType === 'transfer') return 'Transferencia';
-            if (paymentType === 'mobile') return 'Pago móvil';
-            // Buscar en paymentMethods si existe
-            if (Array.isArray(paymentMethods)) {
-              const found = paymentMethods.find(pm => String(pm.id) === String(paymentType) || String(pm.value) === String(paymentType));
-              if (found) return found.name;
-            }
-            return paymentType || '--';
-          })()}</Text>
+            <Text color={palette.text}>{(() => {
+              // Usar venta.payment.payment_method.name si existe
+              if (venta?.payment?.payment_method?.name) return venta.payment.payment_method.name;
+              // Usar venta.payment_method.name si existe (caso entregada)
+              if (venta?.payment_method?.name) return venta.payment_method.name;
+              // Usar venta.payment_method si es string (caso entregada)
+              if (typeof venta?.payment_method === 'string' && venta.payment_method.trim() !== '') {
+                // Buscar en paymentMethods
+                if (Array.isArray(paymentMethods)) {
+                  const found = paymentMethods.find(pm => String(pm.id) === String(venta.payment_method) || String(pm.value) === String(venta.payment_method));
+                  if (found) return found.name;
+                }
+                // Fallback mostrar el string
+                return venta.payment_method;
+              }
+              // Buscar en venta.payment_type, paymentType, o paymentMethods
+              const type = venta?.payment_type || paymentType;
+              if (typeof type === 'object' && type?.name) return type.name;
+              if (type === 'cash') return 'Efectivo';
+              if (type === 'card') return 'Tarjeta';
+              if (type === 'transfer') return 'Transferencia';
+              if (type === 'mobile') return 'Pago móvil';
+              if (Array.isArray(paymentMethods)) {
+                const found = paymentMethods.find(pm => String(pm.id) === String(type) || String(pm.value) === String(type));
+                if (found) return found.name;
+              }
+              if (typeof type === 'string' && type.trim() !== '') return type;
+              return 'No especificado';
+            })()}</Text>
         </HStack>
+        {/* Botón final: para admin ir a órdenes pendientes, para cajero nueva venta */}
         {!fromPendientesEntrega && (
-          <Button mt={4} onPress={() => navigation.popToTop()} bg={palette.primary} width="100%">
-            <Text color="#fff">Nueva Venta</Text>
-          </Button>
+          isAdmin ? (
+            <Button mt={4} onPress={() => navigation.navigate('AdministradorDashboard', { screen: 'AdminOrdenesPendientes' })} bg={palette.primary} width="100%">
+              <Text color="#fff">Ir a Órdenes Pendientes</Text>
+            </Button>
+          ) : (
+            <Button mt={4} onPress={() => navigation.popToTop()} bg={palette.primary} width="100%">
+              <Text color="#fff">Nueva Venta</Text>
+            </Button>
+          )
         )}
         {/* Controles para ADMIN cuando la venta está pendiente */}
         {isAdmin && ventaPendiente && (
@@ -181,7 +229,10 @@ export default function ResumenVentaScreen({ navigation, route }) {
             </Button>
           </Box>
         )}
-      </VStack>
+        </VStack>
+      </ScrollView>
+      {/* Footer fijo visual para espacio de botones Android */}
+      <Box position="absolute" left={0} right={0} bottom={0} height={48} bg="#fff" pointerEvents="none"></Box>
     </Box>
   );
 }

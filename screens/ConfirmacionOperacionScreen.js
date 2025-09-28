@@ -16,7 +16,10 @@ export default function ConfirmacionOperacionScreen() {
         bg="#111"
         borderRadius={8}
         style={{ paddingVertical: 12, minHeight: 44, width: 220, elevation: 2 }}
-        onPress={() => navigation.navigate('HomeScreen')}
+        onPress={() => navigation.reset({
+          index: 0,
+          routes: [{ name: 'CajeroDashboard' }],
+        })}
       >
         <Text color="#fff" fontWeight="bold" fontSize={15} style={{ textAlign: 'center' }}>
           Volver al inicio

@@ -11,6 +11,9 @@ import { createSale, registerPayment, getPaymentMode, getPaymentMethods } from '
 export default function CheckoutScreen() {
   // Estado para controlar el popover abierto
   const [openPopoverIdx, setOpenPopoverIdx] = React.useState(null);
+  // Estado para el botón de enviar operación (press and hold)
+  const [isPressingEnviar, setIsPressingEnviar] = React.useState(false);
+  const [pressCountEnviar, setPressCountEnviar] = React.useState(3);
   // Métodos de pago dinámicos
   const [paymentMethods, setPaymentMethods] = React.useState([]);
   const navigation = useNavigation();
@@ -209,52 +212,60 @@ export default function CheckoutScreen() {
               <Text color="#222" fontWeight="bold" fontSize={18}>${(total - discount).toFixed(2)}</Text>
             </HStack>
           </Box>
-          <Text fontWeight="bold" mb={8}>Método de pago</Text>
-          <Box mb={16} borderWidth={1} borderColor="#ccc" borderRadius={8} overflow="hidden">
-            {paymentMethods.length === 0 && !paymentMethodsError ? (
-              <Text color="#f00" fontWeight="bold" p={12} textAlign="center">
-                No hay métodos de pago disponibles. Contacte al administrador.
-              </Text>
-            ) : (
-              <Picker
-                selectedValue={paymentMethod}
-                onValueChange={(itemValue) => setPaymentMethod(itemValue)}
-                enabled={paymentMethods.length > 0}
-              >
-                <Picker.Item label="Selecciona método de pago" value="" />
-                {(Array.isArray(paymentMethods) ? paymentMethods : []).map((pm) => (
-                  <Picker.Item key={pm.id} label={pm.name} value={pm.id} />
-                ))}
-              </Picker>
-            )}
-          </Box>
-          {paymentMethodsError && (
-            <Button
-              variant="outline"
-              borderColor="#f00"
-              mt={-8}
-              mb={12}
-              borderRadius={8}
-              style={{ paddingVertical: 10, minHeight: 40, width: '100%', borderWidth: 1 }}
-              onPress={() => {
-                setPaymentMethods([]);
-                setPaymentMethod('');
-                fetchPaymentMethods();
-              }}
-            >
-              <Text color="#f00" fontWeight="bold" fontSize={15} style={{ textAlign: 'center' }}>Reintentar cargar métodos de pago</Text>
-            </Button>
+          {/* Mostrar método de pago solo si el modo de cobro es 'cashier' */}
+          {paymentMode === 'cashier' && (
+            <>
+              <Text fontWeight="bold" mb={8}>Método de pago</Text>
+              <Box mb={16} borderWidth={1} borderColor="#ccc" borderRadius={8} overflow="hidden">
+                {paymentMethods.length === 0 && !paymentMethodsError ? (
+                  <Text color="#f00" fontWeight="bold" p={12} textAlign="center">
+                    No hay métodos de pago disponibles. Contacte al administrador.
+                  </Text>
+                ) : (
+                  <Picker
+                    selectedValue={paymentMethod}
+                    onValueChange={(itemValue) => setPaymentMethod(itemValue)}
+                    enabled={paymentMethods.length > 0}
+                  >
+                    <Picker.Item label="Selecciona método de pago" value="" />
+                    {(Array.isArray(paymentMethods) ? paymentMethods : []).map((pm) => (
+                      <Picker.Item key={pm.id} label={pm.name} value={pm.id} />
+                    ))}
+                  </Picker>
+                )}
+              </Box>
+              {paymentMethodsError && (
+                <Button
+                  variant="outline"
+                  borderColor="#f00"
+                  mt={-8}
+                  mb={12}
+                  borderRadius={8}
+                  style={{ paddingVertical: 10, minHeight: 40, width: '100%', borderWidth: 1 }}
+                  onPress={() => {
+                    setPaymentMethods([]);
+                    setPaymentMethod('');
+                    fetchPaymentMethods();
+                  }}
+                >
+                  <Text color="#f00" fontWeight="bold" fontSize={15} style={{ textAlign: 'center' }}>Reintentar cargar métodos de pago</Text>
+                </Button>
+              )}
+            </>
           )}
           {/* Footer visual para espacio de botones Android */}
           <Box height={48} />
           {/* Espaciador visual para botones Android */}
           {/* Espaciador visual para botones Android */}
           <Box height={48} bg="#fff" />
+          {/* Botón de confirmar: lógica según modo de cobro y rol */}
           {(((user?.user?.job_position === 4) && paymentMode === 'cashier') ||
             ((user?.user?.job_position === 1 || user?.user?.job_position === 2) && paymentMode === 'admin')) && (
             <Button
               bg="#111"
-              isDisabled={!paymentMethod || loading || paymentMethods.length === 0}
+              isDisabled={
+                (paymentMode === 'cashier' ? (!paymentMethod || loading || paymentMethods.length === 0) : (loading))
+              }
               onPress={handleConfirm}
               borderRadius={8}
               style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
@@ -262,15 +273,39 @@ export default function CheckoutScreen() {
               <Text color="#fff" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Procesando...' : 'Confirmar y Cobrar'}</Text>
             </Button>
           )}
+          {/* Botón 'Enviar operación' solo para cajero y modo admin, sin más condiciones */}
           {user?.user?.job_position === 4 && paymentMode === 'admin' && (
             <Button
               bg="#f7b731"
-              isDisabled={loading || paymentMethods.length === 0}
-              onPress={handleConfirm}
               borderRadius={8}
               style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
+              isDisabled={loading}
+              onPressIn={() => {
+                if (loading) return;
+                if (window.__enviarOperacionInterval) clearInterval(window.__enviarOperacionInterval);
+                let count = 3;
+                setPressCountEnviar(count);
+                setIsPressingEnviar(true);
+                window.__enviarOperacionInterval = setInterval(() => {
+                  count--;
+                  setPressCountEnviar(count);
+                  if (count === 0) {
+                    clearInterval(window.__enviarOperacionInterval);
+                    setIsPressingEnviar(false);
+                    setLoading(true);
+                    handleConfirm();
+                  }
+                }, 1000);
+              }}
+              onPressOut={() => {
+                setIsPressingEnviar(false);
+                setPressCountEnviar(3);
+                if (window.__enviarOperacionInterval) clearInterval(window.__enviarOperacionInterval);
+              }}
             >
-              <Text color="#222" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading ? 'Enviando...' : 'Enviar operación'}</Text>
+              <Text color="#222" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>
+                {loading ? 'Enviando...' : isPressingEnviar ? `Soltar en ${pressCountEnviar}s` : 'Enviar operación'}
+              </Text>
             </Button>
           )}
           <Button
