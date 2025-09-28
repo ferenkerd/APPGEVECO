@@ -36,9 +36,9 @@ export default function AppHeader() {
         <Box flexDirection="row" alignItems="center">
           <Image
             source={require('../assets/logo.png')}
-            style={{ width: 40, height: 40, resizeMode: 'contain' }}
+            style={{ width: 60, height: 60, resizeMode: 'contain' }}
           />
-          <Text fontSize={20} fontWeight="bold" color={palette.text}>
+          <Text p={4} fontSize={20} fontWeight="bold" color={palette.text}>
             APPGEVECO
           </Text>
   </Box>

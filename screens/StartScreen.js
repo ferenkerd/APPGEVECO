@@ -37,7 +37,7 @@ const StartScreen = ({ navigation }) => {
       <Box style={[startStyles.container, { backgroundColor: palette.background, paddingHorizontal: 24, flex: 1, justifyContent: 'center', paddingBottom: 24 }]}> 
         <Image
           source={colorMode === 'dark' ? require('../assets/logo-dark.png') : require('../assets/logo.png')}
-          style={{ width: 96, height: 96, marginBottom: 24, alignSelf: 'center' }}
+          style={{ width: 130, height: 130, alignSelf: 'center' }}
           resizeMode="contain"
           alt="Logo Keylimar"
         />

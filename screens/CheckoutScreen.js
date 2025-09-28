@@ -1,7 +1,8 @@
+  // Estado para modal de selección de método de pago (asegurar que existe)
+
 import React from 'react';
 import { Box, VStack, HStack, Button, Input, Text, Divider, Popover } from '@gluestack-ui/themed';
-import { ScrollView } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { ScrollView, TextInput, Modal, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +10,21 @@ import { createSale, registerPayment, getPaymentMode, getPaymentMethods } from '
 
 // Recibe los datos de productos, cliente y total por params
 export default function CheckoutScreen() {
+  // Estado para el monto recibido (solo para efectivo)
+  // Detectar si el método de pago es efectivo
+  const isEfectivo = () => {
+    if (!paymentMethod) return false;
+    const efectivoNames = ['efectivo', 'cash', 'contado'];
+    const pm = paymentMethods.find(pm => pm.id === paymentMethod || pm.name === paymentMethod);
+    if (!pm) return false;
+    return efectivoNames.some(name => (pm.name || '').toLowerCase().includes(name));
+  };
+
+  const vuelto = () => {
+    const recibido = Number(receivedAmount) || 0;
+    const totalNum = Number(total) - Number(discount || 0);
+    return recibido > totalNum ? (recibido - totalNum).toFixed(2) : '';
+  };
   // Estado para controlar el popover abierto
   const [openPopoverIdx, setOpenPopoverIdx] = React.useState(null);
   // Estado para el botón de enviar operación (press and hold)
@@ -23,6 +39,8 @@ export default function CheckoutScreen() {
   const [loading, setLoading] = React.useState(false);
   const [paymentMode, setPaymentMode] = React.useState('');
   const { user } = useAuth();
+  const [showPaymentSheet, setShowPaymentSheet] = React.useState(false);
+  const [receivedAmount, setReceivedAmount] = React.useState('');
 
   // Estado para error de métodos de pago
   const [paymentMethodsError, setPaymentMethodsError] = React.useState(false);
@@ -215,25 +233,91 @@ export default function CheckoutScreen() {
           {/* Mostrar método de pago solo si el modo de cobro es 'cashier' */}
           {paymentMode === 'cashier' && (
             <>
-              <Text fontWeight="bold" mb={8}>Método de pago</Text>
-              <Box mb={16} borderWidth={1} borderColor="#ccc" borderRadius={8} overflow="hidden">
-                {paymentMethods.length === 0 && !paymentMethodsError ? (
-                  <Text color="#f00" fontWeight="bold" p={12} textAlign="center">
-                    No hay métodos de pago disponibles. Contacte al administrador.
+              <Box mb={2}>
+                <Text color="#222" mb={1} style={{ fontWeight: 'bold' }}>Método de pago</Text>
+                <TouchableOpacity
+                  style={{ width: '100%', borderRadius: 8, borderWidth: 1, borderColor: '#e5e5e5', backgroundColor: '#fff', height: 44, minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, paddingVertical: 0, marginBottom: 8 }}
+                  onPress={() => setShowPaymentSheet(true)}
+                  disabled={paymentMethods.length === 0}
+                >
+                  <Text style={{ color: paymentMethod ? '#222' : '#888', fontSize: 16 }}>
+                    {paymentMethod
+                      ? (paymentMethods.find(pm => pm.id === paymentMethod)?.name || paymentMethod)
+                      : 'Selecciona método de pago'}
                   </Text>
-                ) : (
-                  <Picker
-                    selectedValue={paymentMethod}
-                    onValueChange={(itemValue) => setPaymentMethod(itemValue)}
-                    enabled={paymentMethods.length > 0}
-                  >
-                    <Picker.Item label="Selecciona método de pago" value="" />
-                    {(Array.isArray(paymentMethods) ? paymentMethods : []).map((pm) => (
-                      <Picker.Item key={pm.id} label={pm.name} value={pm.id} />
-                    ))}
-                  </Picker>
-                )}
+                </TouchableOpacity>
+                {/* Bottom sheet tipo SelectPortal para seleccionar método de pago */}
+                <SelectPortal isOpen={showPaymentSheet} onClose={() => setShowPaymentSheet(false)}>
+                  <SelectBackdrop onPress={() => setShowPaymentSheet(false)} />
+                  <SelectContent style={{ backgroundColor: '#fff', borderRadius: 16, width: '100%', maxWidth: '100%', maxHeight: '80%', minHeight: '30%', paddingBottom: 24 }}>
+                    <SelectDragIndicatorWrapper>
+                      <SelectDragIndicator />
+                    </SelectDragIndicatorWrapper>
+                    <Box style={{ width: '100%', maxWidth: '100%', paddingBottom: 24 }}>
+                      <Text fontWeight="bold" fontSize={18} mb={12}>Selecciona método de pago</Text>
+                      {paymentMethods.length === 0 ? (
+                        <Text color="#f00" fontWeight="bold" p={12} textAlign="center">
+                          No hay métodos de pago disponibles. Contacte al administrador.
+                        </Text>
+                      ) : (
+                        paymentMethods.map((pm) => (
+                          <TouchableOpacity
+                            key={pm.id}
+                            style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}
+                            onPress={() => {
+                              setPaymentMethod(pm.id);
+                              setShowPaymentSheet(false);
+                            }}
+                          >
+                            <Text style={{ fontSize: 16, color: '#222' }}>{pm.name}</Text>
+                          </TouchableOpacity>
+                        ))
+                      )}
+                      <Button mt={8} variant="outline" borderColor="#111" borderRadius={8} onPress={() => setShowPaymentSheet(false)}>
+                        <Text color="#111" fontWeight="bold">Cancelar</Text>
+                      </Button>
+                    </Box>
+                  </SelectContent>
+                </SelectPortal>
               </Box>
+              {/* Campo para monto recibido y vueltos solo si efectivo */}
+              {isEfectivo() && (
+                <>
+                  <Box mb={2}>
+                    <Text color="#222" mb={1} style={{ fontWeight: 'bold' }}>Monto recibido</Text>
+                    <TextInput
+                      value={receivedAmount}
+                      onChangeText={setReceivedAmount}
+                      placeholder="Monto recibido"
+                      keyboardType="numeric"
+                      style={{ width: '100%', borderRadius: 8, borderWidth: 1, borderColor: '#ccc', marginBottom: 8, color: '#222', height: 44, minHeight: 44, paddingHorizontal: 12, paddingVertical: 0 }}
+                    />
+                  </Box>
+                  <Box mb={2}>
+                    <Text mb={1} style={{ fontWeight: 'bold', color: '#222' }}>Vueltos</Text>
+                    <TextInput
+                      value={
+                        Number.isNaN(Number(vuelto()))
+                          ? ''
+                          : (Number(receivedAmount) === Number(total) ? '0.00' : String(vuelto()))
+                      }
+                      editable={false}
+                      placeholder={
+                        Number(receivedAmount) < Number(total) && receivedAmount !== ''
+                          ? 'El monto recibido es menor al total'
+                          : 'Vueltos'
+                      }
+                      placeholderTextColor={
+                        Number(receivedAmount) < Number(total) && receivedAmount !== ''
+                          ? 'red'
+                          : '#888'
+                      }
+                      keyboardType="numeric"
+                      style={{ width: '100%', borderRadius: 8, borderWidth: 1, borderColor: '#ccc', marginBottom: 8, color: '#222', backgroundColor: '#f5f5f5', height: 44, minHeight: 44, paddingHorizontal: 12, paddingVertical: 0 }}
+                    />
+                  </Box>
+                </>
+              )}
               {paymentMethodsError && (
                 <Button
                   variant="outline"
@@ -264,7 +348,9 @@ export default function CheckoutScreen() {
             <Button
               bg="#111"
               isDisabled={
-                (paymentMode === 'cashier' ? (!paymentMethod || loading || paymentMethods.length === 0) : (loading))
+                paymentMode === 'cashier'
+                  ? (!paymentMethod || loading || paymentMethods.length === 0 || (isEfectivo() ? (!receivedAmount || Number(receivedAmount) < (total - discount)) : false))
+                  : loading
               }
               onPress={handleConfirm}
               borderRadius={8}

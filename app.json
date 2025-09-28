@@ -24,8 +24,6 @@
       "jsEngine": "hermes",
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.anonymous.app"
@@ -40,6 +38,18 @@
           "cameraPermission": "Permite que la app acceda a tu cámara",
           "microphonePermission": "Permite que la app acceda a tu micrófono",
           "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "image": "./assets/images/splash-icon.png",
+          "dark": {
+            "image": "./assets/images/splash-icon-dark.png",
+            "backgroundColor": "#000000"
+          },
+          "imageWidth": 200
         }
       ],
       "expo-secure-store"

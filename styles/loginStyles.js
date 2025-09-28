@@ -24,9 +24,8 @@ export const loginStyles = {
     fontSize: 22,
   },
   logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 8,
+    width: 130,
+    height: 130,
     alignSelf: 'center',
   },
   label: {

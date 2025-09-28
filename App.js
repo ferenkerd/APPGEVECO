@@ -119,8 +119,7 @@ export default function App() {
               <NavigationContainer ref={navigationRef}>
                 <AppNavigator />
               </NavigationContainer>
-            </SafeAreaView>
-            <Toast
+              <Toast
               config={{
                 success: (props) => <CustomToast {...props} type="success" />, 
                 error: (props) => <CustomToast {...props} type="error" />, 
@@ -129,6 +128,7 @@ export default function App() {
               }}
               style={{ zIndex: 9999, elevation: 9999, position: 'absolute', pointerEvents: 'box-none' }}
             />
+            </SafeAreaView>
           </View>
         </AuthProvider>
       </GluestackUIProvider>
