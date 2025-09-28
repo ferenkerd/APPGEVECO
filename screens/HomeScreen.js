@@ -77,42 +77,25 @@ const HomeScreen = ({ navigation }) => {
           <Text style={[homeStyles.title, { color: palette.text }]}>Bienvenido, {username ? username : 'usuario'}!</Text>
           <Text style={[homeStyles.subtitle, { color: palette.textSecondary }]}>Rol: {jobPosition ? jobPosition : 'No especificado'}</Text>
           <VStack space="md" width="80%" alignItems="center" marginTop={24}>
+            {/* Botón de continuar (debe existir en tu diseño, si no, agrégalo aquí) */}
             <CustomButton
               style={{ width: '100%' }}
+              backgroundColor={colorMode === 'dark' ? '#4caf50' : '#388e3c'}
+              textColor={'#fff'}
+              onPress={() => {
+                // Acción de continuar, ajusta según tu flujo
+                navigation.navigate('StartSaleScreen');
+              }}
+            >
+              Continuar
+            </CustomButton>
+            <CustomButton
+              style={{ width: '100%', marginTop: 12 }}
               backgroundColor={colorMode === 'dark' ? '#fff' : '#111'}
               textColor={colorMode === 'dark' ? '#111' : '#fff'}
               onPress={handleLogout}
             >
               Cerrar sesión
-            </CustomButton>
-            <CustomButton
-              style={{ width: '100%', marginTop: 12 }}
-              backgroundColor={colorMode === 'dark' ? '#4caf50' : '#388e3c'}
-              textColor={'#fff'}
-              onPress={async () => {
-                try {
-                  const { status } = await BarCodeScanner.requestPermissionsAsync();
-                  if (status === 'granted') {
-                    navigation.navigate('BarcodeTest');
-                  } else {
-                    Toast.show({
-                      type: 'error',
-                      text1: 'Permiso denegado',
-                      text2: 'Debes conceder acceso a la cámara para usar el escáner.',
-                      position: 'top',
-                    });
-                  }
-                } catch (e) {
-                  Toast.show({
-                    type: 'error',
-                    text1: 'Error',
-                    text2: 'No se pudo solicitar el permiso de cámara.',
-                    position: 'top',
-                  });
-                }
-              }}
-            >
-              Probar escáner de código de barras
             </CustomButton>
           </VStack>
         </Card>

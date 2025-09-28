@@ -55,30 +55,6 @@ const StartScreen = ({ navigation }) => {
           >
             Comenzar
           </CustomButton>
-          <CustomButton
-            style={{ width: '100%' }}
-            backgroundColor={colorMode === 'dark' ? '#1976d2' : '#1976d2'}
-            textColor={'#fff'}
-            onPress={() => navigation.navigate('ToastTest')}
-          >
-            Probar Toasts
-          </CustomButton>
-          <CustomButton
-            style={{ width: '100%' }}
-            backgroundColor={colorMode === 'dark' ? '#43a047' : '#43a047'}
-            textColor={'#fff'}
-            onPress={() => navigation.navigate('IdentificarCliente')}
-          >
-            Iniciar compra
-          </CustomButton>
-          <CustomButton
-            style={{ width: '100%' }}
-            backgroundColor={colorMode === 'dark' ? '#4caf50' : '#388e3c'}
-            textColor={'#fff'}
-            onPress={() => navigation.navigate('CameraBarcode')}
-          >
-            Probar escáner de código de barras
-          </CustomButton>
         </VStack>
       </Box>
 
