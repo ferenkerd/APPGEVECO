@@ -1,4 +1,7 @@
 import 'react-native-gesture-handler';
+import { LogBox } from 'react-native';
+// Suprime el warning de useInsertionEffect
+LogBox.ignoreLogs(['useInsertionEffect must not schedule updates']);
 import React, { useState, useContext } from 'react';
 import { GluestackUIProvider } from '@gluestack-ui/themed';
 import Toast from 'react-native-toast-message';
