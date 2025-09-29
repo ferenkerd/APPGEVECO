@@ -89,7 +89,7 @@ function AppNavigator() {
   {/* <Stack.Screen name="BarcodeScanner" component={BarcodeScannerScreen} options={{ title: 'Escáner de Código', headerShown: true }} /> */}
   <Stack.Screen name="CameraBarcode" component={CameraBarcodeScreen} options={{ title: 'Escáner de Código (Cámara)', headerShown: true }} />
   <Stack.Screen name="AgregarProductos" component={AgregarProductosScreen} options={{ headerShown: true, title: 'Agregar Productos' }} />
-  <Stack.Screen name="HistorialVentas" component={HistorialOperacionesScreen} options={{ headerShown: true, title: 'Historial de Ventas' }} />
+  <Stack.Screen name="HistorialVentas" component={HistorialOperacionesScreen} options={{ headerShown: true, title: 'Historial de Ventas', headerShown: true }} />
   <Stack.Screen name="ProcesarPago" component={ProcesarPagoScreen} options={{ title: 'Procesar Pago', headerShown: true }} />
   <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} options={{ title: 'Checkout', headerShown: true }} />
   <Stack.Screen name="ResumenVenta" component={ResumenVentaScreen} options={{ title: 'Resumen de Venta', headerShown: true }} />
