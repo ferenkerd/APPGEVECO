@@ -26,27 +26,28 @@ export default function UserDetailScreen({ route, navigation }) {
 
   // Estado local editable para cada campo
   const [form, setForm] = useState({
-    username: user.username || '',
-    email: user.email || '',
-    is_active: user.is_active !== undefined ? user.is_active : true,
-    is_staff: user.is_staff || false,
-    is_superuser: user.is_superuser || false,
-    date_joined: user.date_joined || '',
-    last_login: user.last_login || '',
-    // job_position puede ser objeto
-    job_position_id: user.job_position?.id || '',
-    job_position_name: user.job_position?.name || '',
-    job_position_description: user.job_position?.description || '',
-    // profile puede ser objeto
-    profile_id: user.profile?.id || '',
-    identity_card: user.profile?.identity_card || '',
-    first_name: user.profile?.first_name || '',
-    last_name: user.profile?.last_name || '',
-    gender: user.profile?.gender || '',
-    contact_phone: user.profile?.contact_phone || '',
-    address: user.profile?.address || '',
+  username: user.username || '',
+  email: user.email || '',
+  is_active: user.is_active !== undefined ? user.is_active : true,
+  is_staff: user.is_staff || false,
+  is_superuser: user.is_superuser || false,
+  date_joined: user.date_joined || '',
+  last_login: user.last_login || '',
+  // job_position puede ser objeto
+  job_position_id: user.job_position?.id || '',
+  job_position_name: user.job_position?.name || '',
+  job_position_description: user.job_position?.description || '',
+  // profile puede ser objeto
+  profile_id: user.profile?.id || '',
+  identity_card: user.profile?.identity_card || '',
+  // Usar user.first_name si existe, si no user.profile?.first_name
+  first_name: user.first_name || user.profile?.first_name || '',
+  last_name: user.profile?.last_name || '',
+  gender: user.profile?.gender || '',
+  contact_phone: user.profile?.contact_phone || '',
+  address: user.profile?.address || '',
 
-    prefix: user.profile?.prefix || '',
+  prefix: user.profile?.prefix || '',
   });
 
   // Cargar prefijos desde la API al montar
@@ -189,24 +190,34 @@ export default function UserDetailScreen({ route, navigation }) {
       <HStack space="md" justifyContent="center" marginTop={48}>
         <Button width="100%" size="lg" variant="solid" backgroundColor={palette.primary} onPress={async () => {
           const accessToken = authUser?.access;
-          const payload = {
-            username: form.username,
-            first_name: form.first_name,
-            last_name: form.last_name,
-            email: form.email,
-            is_active: form.is_active,
-            is_staff: form.is_staff,
-            is_superuser: form.is_superuser,
-            job_position: form.job_position_id || undefined,
-            profile: {
-              identity_card: form.identity_card,
-              last_name: form.last_name,
-              gender: form.gender,
-              prefix: form.prefix,
-              contact_phone: form.contact_phone,
-              address: form.address,
-            }
-          };
+          const payload = {};
+          // Campos simples
+          if (form.username !== user.username) payload.username = form.username;
+          if (form.first_name !== user.first_name) payload.first_name = form.first_name;
+          if (form.last_name !== user.last_name) payload.last_name = form.last_name;
+          if (form.email !== user.email) payload.email = form.email;
+          if (form.is_active !== user.is_active) payload.is_active = form.is_active;
+          if (form.is_staff !== user.is_staff) payload.is_staff = form.is_staff;
+          if (form.is_superuser !== user.is_superuser) payload.is_superuser = form.is_superuser;
+          if ((form.job_position_id || '') !== (user.job_position?.id || '')) payload.job_position = form.job_position_id;
+
+          // Campos anidados de profile
+          const profilePayload = {};
+          if (form.identity_card !== (user.profile?.identity_card || '')) profilePayload.identity_card = form.identity_card;
+          if (form.last_name !== (user.profile?.last_name || '')) profilePayload.last_name = form.last_name;
+          if (form.gender !== (user.profile?.gender || '')) profilePayload.gender = form.gender;
+          if (form.prefix !== (user.profile?.prefix || '')) profilePayload.prefix = form.prefix;
+          if (form.contact_phone !== (user.profile?.contact_phone || '')) profilePayload.contact_phone = form.contact_phone;
+          if (form.address !== (user.profile?.address || '')) profilePayload.address = form.address;
+          if (Object.keys(profilePayload).length > 0) payload.profile = profilePayload;
+
+          // Mostrar el payload enviado
+          console.log('PATCH payload:', payload);
+
+          if (Object.keys(payload).length === 0) {
+            Toast.show({ type: 'info', text1: 'Sin cambios', position: 'top', visibilityTime: 2000 });
+            return;
+          }
           try {
             await patchUser(user.id, payload, accessToken);
             Toast.show({ type: 'success', text1: 'Usuario actualizado', position: 'top', visibilityTime: 2200 });

@@ -51,7 +51,14 @@ export default function UserListScreen() {
                 <Box key={user.id || user.username || user.email} bg={palette.card} borderRadius={12} p={16} mb={2} borderWidth={1} borderColor={palette.border}>
                   <HStack justifyContent="space-between" alignItems="center">
                     <VStack>
-                      <Text fontWeight="bold" color={palette.text}>{user.name || user.username || user.first_name || 'Sin nombre'}</Text>
+                      <Text fontWeight="bold" color={palette.text}>
+                        {user.username} {user.first_name ? `- ${user.first_name}` : ''}
+                      </Text>
+                      <Text color={palette.textSecondary}>
+                        {user.profile?.last_name ? user.profile.last_name : ''}
+                        {user.profile?.last_name && user.profile?.identity_card ? ' | ' : ''}
+                        {user.profile?.identity_card ? `C.I.: ${user.profile.identity_card}` : ''}
+                      </Text>
                       <Text color={palette.textSecondary}>{user.email}</Text>
                       <Text color={palette.primary} fontSize={13}>{user.role_name || user.role || ''}</Text>
                     </VStack>
