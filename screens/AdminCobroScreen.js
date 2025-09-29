@@ -219,9 +219,6 @@ export default function AdminCobroScreen() {
                     </TouchableOpacity>
                   ))
                 )}
-                <Button mt={8} variant="outline" borderColor="#111" borderRadius={8} onPress={() => setShowPaymentSheet(false)}>
-                  <Text color="#111" fontWeight="bold">Cancelar</Text>
-                </Button>
               </Box>
             </SelectContent>
           </SelectPortal>
