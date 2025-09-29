@@ -68,22 +68,34 @@ export const AuthProvider = ({ children }) => {
         const access = await Storage.getItem('access');
         const refresh = await Storage.getItem('refresh');
         if (access && refresh) {
+          let currentAccess = access;
           const payload = parseJwt(access);
           const now = Math.floor(Date.now() / 1000);
           if (payload && payload.exp && payload.exp < now) {
             const newAccess = await refreshAccessToken(refresh);
             if (newAccess) {
-              setUser({ access: newAccess, refresh });
+              currentAccess = newAccess;
             } else {
               setUser(null);
               redirectToLogin();
+              setLoading(false);
+              return;
             }
-          } else {
-            setUser({ access, refresh });
           }
+          // Poblar user.user solo con los datos del token decodificado
+          let userObj = {};
+          if (payload) {
+            userObj = {
+              username: payload.username,
+              job_position: payload.job_position || payload.role,
+              is_superuser: payload.is_superuser,
+              user_id: payload.user_id || payload.user_id || payload.sub || payload.id,
+            };
+          }
+          setUser({ access: currentAccess, refresh, user: userObj });
         }
       } catch (e) {
-  // Silenciar logs
+        // Silenciar logs
       } finally {
         setLoading(false);
       }
@@ -137,6 +149,7 @@ export const AuthProvider = ({ children }) => {
       if (data.access && data.refresh) {
         await Storage.setItem('access', data.access);
         await Storage.setItem('refresh', data.refresh);
+        // Usar el objeto user que viene en la respuesta del login
         setUser({ access: data.access, refresh: data.refresh, user: data.user });
         return true;
       } else {

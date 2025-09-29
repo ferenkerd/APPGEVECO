@@ -59,7 +59,9 @@ export default function AdminOtrosScreen({ navigation }) {
 
   // Handler para los botones de cada módulo
   const handleModulePress = (mod) => {
-    if (mod.key === 'tipo-cobro') {
+    if (mod.key === 'usuarios') {
+      navigation.navigate('UserList');
+    } else if (mod.key === 'tipo-cobro') {
       navigation.navigate('TipoCobro');
     } else {
       // Aquí puedes agregar navegación para otros módulos si lo deseas

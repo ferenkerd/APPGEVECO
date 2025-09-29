@@ -96,7 +96,7 @@ export default function TabHeader({ title, hideMenu, showMenu }) {
                     onPress={async () => {
                       setMenuVisible(false);
                       await logout();
-                      navigation.navigate('Login');
+                      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
                     }}
                     style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}
                   >

@@ -1,3 +1,32 @@
+// --- USUARIOS ---
+// Obtener lista de usuarios
+export async function getUsers(accessToken) {
+  return apiFetch('usuarios/', { method: 'GET' }, accessToken);
+}
+
+// Crear usuario
+export async function createUser(userData, accessToken) {
+  return apiFetch('usuarios/', {
+    method: 'POST',
+    body: JSON.stringify(userData)
+  }, accessToken);
+}
+
+// Actualizar usuario (PUT: todos los campos, requiere id)
+export async function updateUser(userData, accessToken) {
+  return apiFetch('usuarios/', {
+    method: 'PUT',
+    body: JSON.stringify(userData)
+  }, accessToken);
+}
+
+// Actualizar usuario parcialmente (PATCH: solo campos a modificar, requiere id)
+export async function patchUser(userData, accessToken) {
+  return apiFetch('usuarios/', {
+    method: 'PATCH',
+    body: JSON.stringify(userData)
+  }, accessToken);
+}
 // Obtener métodos de pago disponibles
 export async function getPaymentMethods(accessToken) {
   return apiFetch('payment-methods/', { method: 'GET' }, accessToken);

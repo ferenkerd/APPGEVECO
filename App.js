@@ -1,3 +1,5 @@
+import UserListScreen from './screens/UserListScreen';
+import UserDetailScreen from './screens/UserDetailScreen';
 import 'react-native-gesture-handler';
 import { LogBox } from 'react-native';
 // Suprime el warning de useInsertionEffect
@@ -104,8 +106,10 @@ function AppNavigator() {
   <Stack.Screen name="ToastTest" component={ToastTestScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DetalleVenta" component={DetalleVentaScreen} options={{ title: 'Detalle de Venta', headerShown: true, presentation: 'card' }} />
       <Stack.Screen name="TipoCobro" component={TipoCobroScreen} options={{ title: 'Tipo de cobro', headerShown: false }} />
-      <Stack.Screen name="AdminCobro" component={AdminCobroScreen} options={{ title: 'Administrar Cobro', headerShown: true }} />
-      <Stack.Screen name="AdminCobroScreen" component={AdminCobroScreen} options={{ title: 'Cobro de Orden', headerShown: true }} />
+  <Stack.Screen name="AdminCobro" component={AdminCobroScreen} options={{ title: 'Administrar Cobro', headerShown: true }} />
+  <Stack.Screen name="AdminCobroScreen" component={AdminCobroScreen} options={{ title: 'Cobro de Orden', headerShown: true }} />
+  <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Usuarios', headerShown: true }} />
+  <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'Detalle de usuario', headerShown: true }} />
     </Stack.Navigator>
   );
 }

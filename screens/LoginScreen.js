@@ -27,24 +27,24 @@ const LoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    devLog('LoginScreen useEffect', { user });
-    if (user && user.user && user.user.job_position) {
-      devLog('job_position value:', user.user.job_position);
-      // Mapear los valores numéricos a los dashboards
-      switch (user.user.job_position) {
-        case 4:
-          navigation.replace('CajeroDashboard');
-          break;
-        case 3:
-          navigation.replace('AlmacenistaDashboard');
-          break;
-        case 2:
-          navigation.replace('AdministradorDashboard');
-          break;
-        default:
-          // navigation.replace('Home'); // O una pantalla de error/perfil no reconocido
-          // Solucionado: No navegar a 'Home', puedes mostrar un error o dejarlo vacío
-          break;
+    devLog('LoginScreen useEffect user:', user);
+    if (user && user.user) {
+      devLog('LoginScreen user.user:', user.user);
+    }
+    if (user && user.user && user.user.job_position && user.user.job_position.id) {
+      const role = Number(user.user.job_position.id);
+      devLog('LoginScreen job_position value:', role);
+      let dashboard = null;
+      if (role === 1 || role === 2) {
+        dashboard = 'AdministradorDashboard';
+      } else if (role === 3) {
+        dashboard = 'AlmacenistaDashboard';
+      } else if (role === 4) {
+        dashboard = 'CajeroDashboard';
+      }
+      if (dashboard) {
+        devLog('LoginScreen redirigiendo a:', dashboard);
+        navigation.reset({ index: 0, routes: [{ name: dashboard }] });
       }
     }
   }, [user, navigation]);

@@ -18,33 +18,40 @@ const StartScreen = ({ navigation }) => {
   const palette = getPalette(colorMode);
   const { user, loading } = useAuth();
 
+
   useEffect(() => {
-    console.log('[StartScreen] loading:', loading, 'user:', user);
-    if (!loading && user && user.user) {
-      let dashboard = 'CajeroDashboard';
-      // Superadmin (1) y Admin (2) van al dashboard de admin
-      if (user.user.role === 1 || user.user.role === 2 || user.user.is_superuser) {
+    devLog('StartScreen user:', user);
+    if (user && user.user) {
+      devLog('StartScreen user.user:', user.user);
+    }
+    // Si hay sesión activa y job_position, redirige al dashboard correspondiente
+    if (user && user.user && user.user.job_position && user.user.job_position.id) {
+      const role = Number(user.user.job_position.id);
+      devLog('StartScreen job_position:', role);
+      let dashboard = null;
+      if (role === 1 || role === 2) {
         dashboard = 'AdministradorDashboard';
-      } else if (user.user.role === 3) {
+      } else if (role === 3) {
         dashboard = 'AlmacenistaDashboard';
-      } else if (user.user.role === 4) {
+      } else if (role === 4) {
         dashboard = 'CajeroDashboard';
       }
-      console.log('[StartScreen] Redirigiendo a:', dashboard, 'ROL:', user.user.role, 'SUPERUSER:', user.user.is_superuser);
-      setTimeout(() => {
+      if (dashboard) {
+        devLog('StartScreen redirigiendo a:', dashboard);
         navigation.reset({ index: 0, routes: [{ name: dashboard }] });
-      }, 0);
+      }
     }
-  }, [user, loading, navigation]);
+  }, [user, navigation]);
 
-  if (loading) return null;
+  // Si hay sesión activa, no mostrar StartScreen (redirige automáticamente)
+  if (user && user.user && user.user.job_position) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>
       <ExpoStatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
-      {/* Fondo bajo el status bar para edge-to-edge */}
-      <Box style={{ height: 32, backgroundColor: palette.background, width: '100%' }} />
-      {/* Botón de modo en la esquina superior izquierda */}
+    {/* Botón de modo en la esquina superior derecha */}
   <Box style={{ position: 'absolute', top: 40, right: 16, zIndex: 10 }}>
         <Pressable
           onPress={toggleColorMode}
@@ -58,7 +65,7 @@ const StartScreen = ({ navigation }) => {
           )}
         </Pressable>
       </Box>
-      <Box style={[startStyles.container, { backgroundColor: palette.background, paddingHorizontal: 24, flex: 1, justifyContent: 'center', paddingBottom: 24 }]}> 
+  <Box style={[startStyles.container, { backgroundColor: palette.background, paddingHorizontal: 24, flex: 1, justifyContent: 'center', alignItems: 'center' }]}> 
         <Image
           source={colorMode === 'dark' ? require('../assets/logo-dark.png') : require('../assets/logo.png')}
           style={{ width: 130, height: 130, alignSelf: 'center' }}
