@@ -37,6 +37,7 @@ import ToastTestScreen from './screens/ToastTestScreen';
 import TipoCobroScreen from './screens/TipoCobroScreen';
 import { ActivityIndicator, View, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import BackButton from './components/BackButton';
 import * as NavigationBar from 'expo-navigation-bar';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
@@ -65,31 +66,31 @@ function AppNavigator() {
   return (
   <Stack.Navigator
     initialRouteName="Start"
-    screenOptions={{
+    screenOptions={({ navigation }) => ({
       headerStyle: { backgroundColor: palette.background },
       headerTintColor: palette.text,
       headerTitleStyle: { color: palette.text },
-      headerRight: () => (
-        <MaterialIcons
-          name="home"
-          size={28}
-          color={palette.primary}
-          style={{ marginRight: 16 }}
-          onPress={() => navigationRef.current?.reset({ index: 0, routes: [{ name: 'CajeroDashboard' }] })}
-        />
-      ),
-    }}
+    })}
   >
   <Stack.Screen name="Start" component={StartScreen} options={{ headerShown: false }} />
   <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
   <Stack.Screen name="Home" component={HomeScreen} />
   <Stack.Screen name="CajeroDashboard" component={CajeroDashboard} options={{ headerShown: false }} />
   {/* <Stack.Screen name="StartSale" component={StartSaleScreen} options={{ headerShown: false }} /> */}
-  <Stack.Screen name="IdentificarCliente" component={IdentificarClienteScreen} options={{ title: 'Identificar Cliente', headerShown: true }} />
+  <Stack.Screen
+  name="IdentificarCliente"
+  component={IdentificarClienteScreen}
+  options={{
+    title: 'Identificar Cliente',
+    headerShown: true,
+    headerLeft: () => <BackButton to="CajeroDashboard" />,
+  }}
+/>
   {/* <Stack.Screen name="BarcodeScanner" component={BarcodeScannerScreen} options={{ title: 'Escáner de Código', headerShown: true }} /> */}
   <Stack.Screen name="CameraBarcode" component={CameraBarcodeScreen} options={{ title: 'Escáner de Código (Cámara)', headerShown: true }} />
   <Stack.Screen name="AgregarProductos" component={AgregarProductosScreen} options={{ headerShown: true, title: 'Agregar Productos' }} />
-  <Stack.Screen name="HistorialVentas" component={HistorialOperacionesScreen} options={{ headerShown: true, title: 'Historial de Ventas', headerShown: true }} />
+  <Stack.Screen name="HistorialVentas" component={HistorialOperacionesScreen} options={{ title: 'Historial de Ventas',     headerShown: true,
+    headerLeft: () => <BackButton to="CajeroDashboard" />, }} />
   <Stack.Screen name="ProcesarPago" component={ProcesarPagoScreen} options={{ title: 'Procesar Pago', headerShown: true }} />
   <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} options={{ title: 'Checkout', headerShown: true }} />
   <Stack.Screen name="ResumenVenta" component={ResumenVentaScreen} options={{ title: 'Resumen de Venta', headerShown: true }} />
