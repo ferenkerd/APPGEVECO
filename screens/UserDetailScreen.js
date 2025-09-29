@@ -67,16 +67,12 @@ export default function UserDetailScreen({ route, navigation }) {
 
   return (
     <Box flex={1} bg={palette.surface}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
       <Text fontSize={24} fontWeight="bold" mb={2} mt={4} textAlign="center" color={palette.text}>
         Gestión de usuario
       </Text>
       <Divider mb={2} />
       <VStack space="md" mt={4}>
-          <Text fontWeight="bold" color={palette.text} mb={-2}>ID</Text>
-          <Input variant="outline" mb={2} isDisabled>
-            <InputField value={String(user.id || user.user_id || '-')} placeholder="ID" editable={false} />
-          </Input>
           <Text fontWeight="bold" color={palette.text} mb={-2}>Usuario</Text>
           <Input variant="outline" mb={2} isDisabled>
             <InputField value={form.username} placeholder="Usuario" editable={false} />
@@ -101,24 +97,11 @@ export default function UserDetailScreen({ route, navigation }) {
         </HStack>
         <Divider my={2} />
           <Text fontWeight="bold" color={palette.text} mb={-2}>Rol</Text>
-          <Text fontWeight="bold" color={palette.text} mb={-2}>ID de rol</Text>
           <Input variant="outline" mb={2} isDisabled>
-            <InputField value={String(form.job_position_id)} placeholder="ID de rol" editable={false} />
-          </Input>
-          <Text fontWeight="bold" color={palette.text} mb={-2}>Nombre de rol</Text>
-          <Input variant="outline" mb={2}>
-            <InputField value={form.job_position_name} placeholder="Nombre de rol" onChangeText={v => handleChange('job_position_name', v)} />
-          </Input>
-          <Text fontWeight="bold" color={palette.text} mb={-2}>Descripción de rol</Text>
-          <Input variant="outline" mb={2}>
-            <InputField value={form.job_position_description} placeholder="Descripción de rol" onChangeText={v => handleChange('job_position_description', v)} />
+            <InputField value={form.job_position_name} placeholder="Rol" editable={false} />
           </Input>
         <Divider my={2} />
           <Text fontWeight="bold" color={palette.text} mb={-2}>Perfil</Text>
-          <Text fontWeight="bold" color={palette.text} mb={-2}>ID de perfil</Text>
-          <Input variant="outline" mb={2} isDisabled>
-            <InputField value={String(form.profile_id)} placeholder="ID de perfil" editable={false} />
-          </Input>
           <Text fontWeight="bold" color={palette.text} mb={-2}>Cédula</Text>
           <Input variant="outline" mb={2}>
             <InputField value={form.identity_card} placeholder="Cédula" onChangeText={v => handleChange('identity_card', v)} />
@@ -132,9 +115,32 @@ export default function UserDetailScreen({ route, navigation }) {
             <InputField value={form.last_name} placeholder="Apellido(s)" onChangeText={v => handleChange('last_name', v)} />
           </Input>
           <Text fontWeight="bold" color={palette.text} mb={-2}>Género</Text>
-          <Input variant="outline" mb={2}>
-            <InputField value={form.gender} placeholder="Género" onChangeText={v => handleChange('gender', v)} />
-          </Input>
+          <Select
+            selectedValue={form.gender}
+            onValueChange={v => handleChange('gender', v)}
+            accessibilityLabel="Selecciona género"
+            mb={2}
+          >
+            <SelectTrigger variant="outline" size="md">
+              <SelectInput placeholder="Género" value={(() => {
+                if (form.gender === 'M') return 'Masculino';
+                if (form.gender === 'F') return 'Femenino';
+                if (form.gender === 'O') return 'Otro';
+                return '';
+              })()} />
+              <SelectIcon as={require('@expo/vector-icons').MaterialIcons} name="arrow-drop-down" />
+            </SelectTrigger>
+            <SelectPortal>
+              <SelectBackdrop />
+              <SelectContent style={{ paddingBottom: 48 }}>
+                <SelectDragIndicatorWrapper>
+                  <SelectDragIndicator />
+                </SelectDragIndicatorWrapper>
+                <SelectItem label="Masculino" value="M" />
+                <SelectItem label="Femenino" value="F" />
+              </SelectContent>
+            </SelectPortal>
+          </Select>
           <Text fontWeight="bold" color={palette.text} mb={-2}>Teléfono</Text>
           <HStack space="sm" alignItems="center" mb={2}>
             <Box style={{ minWidth: 100 }}>
@@ -154,7 +160,7 @@ export default function UserDetailScreen({ route, navigation }) {
                 </SelectTrigger>
                 <SelectPortal>
                   <SelectBackdrop />
-                  <SelectContent>
+                  <SelectContent style={{ paddingBottom: 48 }}>
                     <SelectDragIndicatorWrapper>
                       <SelectDragIndicator />
                     </SelectDragIndicatorWrapper>
@@ -177,17 +183,16 @@ export default function UserDetailScreen({ route, navigation }) {
           <Input variant="outline" mb={2}>
             <InputField value={form.address} placeholder="Dirección" onChangeText={v => handleChange('address', v)} />
           </Input>
+          <Divider />
       </VStack>
-      <Divider my={4} />
-      <HStack space="md" justifyContent="center">
-        <Button size="lg" variant="solid" backgroundColor={palette.primary} onPress={() => {/* TODO: guardar cambios */}}>
+      <HStack space="md" justifyContent="center" marginTop={48}>
+        <Button width="100%" size="lg" variant="solid" backgroundColor={palette.primary} onPress={() => {/* TODO: guardar cambios */}} style={{ marginBottom: 24 }}>
           <Text color={palette.background} fontWeight="bold">Guardar cambios</Text>
         </Button>
-        <Button size="lg" variant="outline" borderColor="#f00" onPress={() => {/* TODO: eliminar */}}>
-          <Text color="#f00" fontWeight="bold">Eliminar</Text>
-        </Button>
-        </HStack>
-      </ScrollView>
-    </Box>
-  );
+      </HStack>
+        
+  </ScrollView>
+  <Box style={{ height: 48 }} />
+  </Box>
+);
 }
