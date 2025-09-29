@@ -22,13 +22,15 @@ const StartScreen = ({ navigation }) => {
     console.log('[StartScreen] loading:', loading, 'user:', user);
     if (!loading && user && user.user) {
       let dashboard = 'CajeroDashboard';
-      if (user.user.role === 'admin' || user.user.is_superuser) {
+      // Superadmin (1) y Admin (2) van al dashboard de admin
+      if (user.user.role === 1 || user.user.role === 2 || user.user.is_superuser) {
         dashboard = 'AdministradorDashboard';
-      } else if (user.user.role === 'almacenista') {
+      } else if (user.user.role === 3) {
         dashboard = 'AlmacenistaDashboard';
+      } else if (user.user.role === 4) {
+        dashboard = 'CajeroDashboard';
       }
-      console.log('[StartScreen] Redirigiendo a:', dashboard);
-      // Forzar la redirección después del render para evitar problemas de timing
+      console.log('[StartScreen] Redirigiendo a:', dashboard, 'ROL:', user.user.role, 'SUPERUSER:', user.user.is_superuser);
       setTimeout(() => {
         navigation.reset({ index: 0, routes: [{ name: dashboard }] });
       }, 0);
