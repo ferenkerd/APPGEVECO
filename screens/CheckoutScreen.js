@@ -7,6 +7,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { useAuth } from '../context/AuthContext';
 import { createSale, registerPayment, getPaymentMode, getPaymentMethods } from '../services/api';
+import { Select, SelectTrigger, SelectItem, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator } from '@gluestack-ui/themed';
 
 // Recibe los datos de productos, cliente y total por params
 export default function CheckoutScreen() {
