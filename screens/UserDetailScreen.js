@@ -1,3 +1,10 @@
+// Lista de roles/puestos de trabajo (puedes reemplazar por fetch a la API si tienes endpoint)
+const jobPositions = [
+  { id: 1, name: 'Administrador' },
+  { id: 2, name: 'Almacenista' },
+  { id: 3, name: 'Cajero' }
+];
+// Agrega más roles según tu backend
 
 import React, { useContext, useState } from 'react';
 // Formatea una fecha ISO a DD/MM/YYYY HH:mm
@@ -76,8 +83,8 @@ export default function UserDetailScreen({ route, navigation }) {
       <Divider mb={2} />
       <VStack space="md" mt={4}>
           <Text fontWeight="bold" color={palette.text} mb={-2}>Usuario</Text>
-          <Input variant="outline" mb={2} isDisabled>
-            <InputField value={form.username} placeholder="Usuario" editable={false} />
+          <Input variant="outline" mb={2}>
+            <InputField value={form.username} placeholder="Usuario" onChangeText={v => handleChange('username', v)} />
           </Input>
           <Text fontWeight="bold" color={palette.text} mb={-2}>Email</Text>
           <Input variant="outline" mb={2}>
@@ -87,21 +94,47 @@ export default function UserDetailScreen({ route, navigation }) {
           <Input variant="outline" mb={2} isDisabled>
             <InputField value={formatDate(form.date_joined)} placeholder="Fecha de registro" editable={false} />
           </Input>
-          <Text fontWeight="bold" color={palette.text} mb={-2}>Último acceso</Text>
-          <Input variant="outline" mb={2} isDisabled>
-            <InputField value={formatDate(form.last_login)} placeholder="Último acceso" editable={false} />
-          </Input>
         <HStack space="md" alignItems="center">
           <Text color={palette.text}>Activo:</Text>
-          <Button size="sm" variant={form.is_active ? 'solid' : 'outline'} backgroundColor={palette.primary} onPress={() => handleChange('is_active', !form.is_active)}>
-            <Text color={form.is_active ? palette.background : palette.primary}>{form.is_active ? 'Sí' : 'No'}</Text>
+          <Button
+            size="sm"
+            variant={form.is_active ? 'solid' : 'outline'}
+            backgroundColor={form.is_active ? '#2ecc40' : '#e74c3c'}
+            borderColor={form.is_active ? '#2ecc40' : '#e74c3c'}
+            onPress={() => handleChange('is_active', !form.is_active)}
+          >
+            <Text color={form.is_active ? '#fff' : '#fff'}>{form.is_active ? 'Sí' : 'No'}</Text>
           </Button>
         </HStack>
         <Divider my={2} />
           <Text fontWeight="bold" color={palette.text} mb={-2}>Rol</Text>
-          <Input variant="outline" mb={2} isDisabled>
-            <InputField value={form.job_position_name} placeholder="Rol" editable={false} />
-          </Input>
+          {/* Aquí podrías cargar los roles desde una API, por ahora ejemplo simple */}
+          <Select
+            selectedValue={form.job_position_id}
+            onValueChange={v => {
+              const selected = jobPositions.find(j => String(j.id) === String(v));
+              handleChange('job_position_id', v);
+              handleChange('job_position_name', selected ? selected.name : '');
+            }}
+            accessibilityLabel="Selecciona rol"
+            mb={2}
+          >
+            <SelectTrigger variant="outline" size="md">
+              <SelectInput placeholder="Rol" value={form.job_position_name} />
+              <SelectIcon as={require('@expo/vector-icons').MaterialIcons} name="arrow-drop-down" />
+            </SelectTrigger>
+            <SelectPortal>
+              <SelectBackdrop />
+              <SelectContent style={{ paddingBottom: 48 }}>
+                <SelectDragIndicatorWrapper>
+                  <SelectDragIndicator />
+                </SelectDragIndicatorWrapper>
+                {jobPositions.map(j => (
+                  <SelectItem key={j.id} label={j.name} value={String(j.id)} />
+                ))}
+              </SelectContent>
+            </SelectPortal>
+          </Select>
         <Divider my={2} />
           <Text fontWeight="bold" color={palette.text} mb={-2}>Perfil</Text>
           <Text fontWeight="bold" color={palette.text} mb={-2}>Cédula</Text>
