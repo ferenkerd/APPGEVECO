@@ -300,7 +300,7 @@ export default function AdminCobroScreen() {
           }
           onPress={handleCobrar}
           borderRadius={8}
-          style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8 }}
+          style={{ paddingVertical: 12, minHeight: 44, width: '100%', elevation: 2, marginBottom: 8, marginTop: 92 }}
         >
           <Text color="#fff" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>{loading || submitted ? 'Procesando...' : 'Aceptar y Cobrar'}</Text>
         </Button>
@@ -308,13 +308,12 @@ export default function AdminCobroScreen() {
           variant="outline"
           borderColor="#111"
           borderRadius={8}
-          style={{ paddingVertical: 12, minHeight: 44, width: '100%', borderWidth: 1, marginBottom: 48}}
+          style={{ paddingVertical: 12, minHeight: 44, width: '100%', borderWidth: 1,}}
           onPress={() => navigation.goBack()}
         >
           <Text color="#111" fontWeight="bold" fontSize={15} style={{ letterSpacing: 0.2, textAlign: 'center' }}>Cancelar</Text>
         </Button>
         {/* Footer visual para espacio de botones Android */}
-        <Box height={48} />
         <Box height={48} bg="#fff" />
       </ScrollView>
       {/* Footer fijo visual para espacio de botones Android */}

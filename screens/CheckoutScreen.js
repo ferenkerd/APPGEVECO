@@ -303,10 +303,6 @@ export default function CheckoutScreen() {
               )}
             </>
           )}
-          {/* Footer visual para espacio de botones Android */}
-          <Box height={48} />
-          {/* Espaciador visual para botones Android */}
-          {/* Espaciador visual para botones Android */}
           <Box height={48} bg="#fff" />
           {/* Botón de confirmar: lógica según modo de cobro y rol */}
           {(((user?.user?.job_position === 4) && paymentMode === 'cashier') ||
