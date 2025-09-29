@@ -309,11 +309,11 @@ export default function HistorialOperacionesScreen() {
                       (detalleOperacion?.status || '').toLowerCase() === 'paid' ? '#22bb33' :
                       (detalleOperacion?.status || '').toLowerCase() === 'pending' ? '#ff4444' : '#888'
                     }>
-                      Estado: {detalleOperacion?.status_display || ''}
+                      Estado: {detalleOperacion?.status_display || ''} / {detalleOperacion?.delivery_status || ''}
                     </Text>
                     {detalleOperacion?.cashier && (
                       <Text color="#888" fontSize={13}>
-                        Cajero ID: {detalleOperacion.cashier.id || detalleOperacion.cashier.user_id || detalleOperacion.cashier.pk || detalleOperacion.cashier.username || 'N/A'}
+                        Cajero: {detalleOperacion.cashier.name || detalleOperacion.cashier.user_id || detalleOperacion.cashier.pk || detalleOperacion.cashier.username || 'N/A'}
                       </Text>
                     )}
                   </HStack>
@@ -392,11 +392,21 @@ export default function HistorialOperacionesScreen() {
                         const nombre = item.product && item.product.name ? item.product.name : 'Producto';
                         return (
                           <Box key={idx} mb={2}>
-                            <HStack justifyContent="space-between" alignItems="center">
-                              <Text color="#888">{nombre}</Text>
-                              <Text color="#888">x{qty}</Text>
-                              <Text color="#888">${price.toFixed(2)}</Text>
-                              <Text color="#888">${total.toFixed(2)}</Text>
+                            <HStack alignItems="center" justifyContent="space-between">
+                              <Box flex={2.5} mr={2}>
+                                <Text color="#888" numberOfLines={3} ellipsizeMode="tail" style={{ flexShrink: 1, flexWrap: 'wrap' }}>
+                                  {nombre}
+                                </Text>
+                              </Box>
+                              <Box flex={0.6} minWidth={32} alignItems="flex-end">
+                                <Text color="#111" fontWeight="bold">x{qty}</Text>
+                              </Box>
+                              <Box flex={1.7} minWidth={80} alignItems="flex-end">
+                                <VStack alignItems="flex-end">
+                                  <Text color="#888" fontSize={13}>Unit: ${price.toFixed(2)}</Text>
+                                  <Text color="#111" fontWeight="bold">${total.toFixed(2)}</Text>
+                                </VStack>
+                              </Box>
                             </HStack>
                           </Box>
                         );
@@ -404,6 +414,28 @@ export default function HistorialOperacionesScreen() {
                     </VStack>
                   </Box>
                   <Divider my={8} />
+                  {/* Contador de productos debajo de la lista */}
+                  <HStack justifyContent="space-between" alignItems="center" mb={2}>
+                    <Text  fontWeight="bold">
+                      items/productos
+                    </Text>
+                    <Text  fontWeight="bold">
+                      {detalleOperacion?.details?.length || 0}/{detalleOperacion?.details?.length || 0}
+                    </Text>
+                  </HStack>
+                    {/* Método de pago */}
+                    <HStack justifyContent="space-between" alignItems="center" mb={2}>
+                      <Text  fontWeight="bold">Método de pago</Text>
+                      <Text fontWeight={"bold"}>
+                        {(() => {
+                          const pm = detalleOperacion?.payment?.payment_method?.name;
+                          if (!pm) return 'No especificado';
+                          if (typeof pm === 'object' && pm.name) return pm.name;
+                          if (typeof pm === 'string' && pm.trim() !== '') return pm;
+                          return 'No especificado';
+                        })()}
+                      </Text>
+                    </HStack>
                   <HStack justifyContent="space-between" mb={1}>
                     <Text fontWeight="bold">Subtotal</Text>
                     <Text>${Number(detalleOperacion?.subtotal || detalleOperacion?.total_amount || 0).toFixed(2)}</Text>
@@ -421,8 +453,8 @@ export default function HistorialOperacionesScreen() {
                     </HStack>
                   ) : null}
                   <HStack justifyContent="space-between" mb={2}>
-                    <Text fontWeight="bold" fontSize={17}>Total</Text>
-                    <Text fontWeight="bold" fontSize={17}>${Number(detalleOperacion?.total_amount || 0).toFixed(2)}</Text>
+                    <Text color='#111' fontWeight="bold" fontSize={17}>Total</Text>
+                    <Text color='#111' fontWeight="bold" fontSize={17}>${Number(detalleOperacion?.total_amount || 0).toFixed(2)}</Text>
                   </HStack>
                   <Divider my={8} />
                   {detalleOperacion?.payment_method && (
