@@ -37,6 +37,8 @@ import TipoCobroScreen from './screens/TipoCobroScreen';
 import { ActivityIndicator, View, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
 
 // import BarcodeScannerScreen from './screens/BarcodeScannerScreen';
 import CameraBarcodeScreen from './screens/CameraBarcodeScreen';
@@ -60,14 +62,23 @@ function AppNavigator() {
   }
 
   return (
-    <Stack.Navigator
-      initialRouteName="Start"
-      screenOptions={{
-        headerStyle: { backgroundColor: palette.background },
-        headerTintColor: palette.text,
-        headerTitleStyle: { color: palette.text },
-      }}
-    >
+  <Stack.Navigator
+    initialRouteName="Start"
+    screenOptions={{
+      headerStyle: { backgroundColor: palette.background },
+      headerTintColor: palette.text,
+      headerTitleStyle: { color: palette.text },
+      headerRight: () => (
+        <MaterialIcons
+          name="home"
+          size={28}
+          color={palette.primary}
+          style={{ marginRight: 16 }}
+          onPress={() => navigationRef.current?.reset({ index: 0, routes: [{ name: 'CajeroDashboard' }] })}
+        />
+      ),
+    }}
+  >
   <Stack.Screen name="Start" component={StartScreen} options={{ headerShown: false }} />
   <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
   <Stack.Screen name="Home" component={HomeScreen} />
