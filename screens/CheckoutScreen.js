@@ -158,50 +158,15 @@ export default function CheckoutScreen() {
                 const price = Number(prod.sale_price || prod.price || 0);
                 return (
                   <HStack key={idx} justifyContent="space-between" alignItems="center">
-                    {/* Columna: Nombre del producto (con popover) */}
+                    {/* Columna: Nombre del producto (multilínea) */}
                     <Box flex={2} maxWidth={180}>
-                      <Popover
-                        isOpen={openPopoverIdx === idx}
-                        onOpen={() => setOpenPopoverIdx(idx)}
-                        onClose={() => setOpenPopoverIdx(null)}
-                        closeOnBlur={true}
-                        closeOnEsc={true}
-                        trigger={triggerProps => (
-                          <Text
-                            {...triggerProps}
-                            style={{ maxWidth: 180 }}
-                            numberOfLines={1}
-                            ellipsizeMode="tail"
-                          >
-                            {prod.name}
-                          </Text>
-                        )}
+                      <Text
+                        style={{ maxWidth: 180, flexWrap: 'wrap' }}
+                        numberOfLines={3}
+                        ellipsizeMode="tail"
                       >
-                        <Popover.Content
-                          style={{
-                            backgroundColor: '#fff',
-                            borderWidth: 1,
-                            borderColor: '#111',
-                            maxWidth: 260,
-                          }}
-                        >
-                          <Popover.Arrow style={{ backgroundColor: '#fff' }} />
-                          <Popover.Body style={{ flexShrink: 1 }}>
-                            <ScrollView
-                              nestedScrollEnabled={true}
-                              contentContainerStyle={{ flexGrow: 1}}
-                              style={{ minHeight: 32, maxHeight: 140, maxWidth: 240 }}
-                            >
-                              <Text
-                                style={{ fontSize: 16, textAlign: 'center', flexWrap: 'wrap' }}
-                                onPress={() => setOpenPopoverIdx(null)}
-                              >
-                                {prod.name}
-                              </Text>
-                            </ScrollView>
-                          </Popover.Body>
-                        </Popover.Content>
-                      </Popover>
+                        {prod.name}
+                      </Text>
                     </Box>
                     {/* Columna: Cantidad */}
                     <Box flex={1} alignItems="center">
