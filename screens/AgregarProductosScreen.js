@@ -23,6 +23,7 @@ import { apiFetch } from '../services/api';
 
 // AgregarProductosScreen debe ser un componente funcional
 export default function AgregarProductosScreen({ navigation, route }) {
+  const { user } = useAuth();
   // Nuevo: filtro de búsqueda
   const [searchField, setSearchField] = useState('all'); // 'all', 'name', 'code', 'price', 'category'
   // Estado para activar/desactivar los botones pequeños de suma/resta
@@ -120,7 +121,6 @@ export default function AgregarProductosScreen({ navigation, route }) {
     );
   }
   const client = route?.params?.client;
-  const { user } = useAuth();
 
   const [productQuery, setProductQuery] = useState('');
   const [products, setProducts] = useState([]); // [{id, name, price, qty}]
@@ -930,6 +930,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
         }}
         onClose={() => setShowScanner(false)}
         allProducts={allProducts}
+        userRole={user?.user?.job_position}
         onAddProduct={async (product) => {
           const existing = products.find(p => p.id === product.id);
           if (existing) {

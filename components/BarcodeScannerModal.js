@@ -6,25 +6,38 @@ import * as Haptics from 'expo-haptics';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
 // Recibe allProducts para buscar el nombre del producto escaneado
-export default function BarcodeScannerModal({ visible, onScanned, onClose, allProducts = [], onAddProduct, scannerMode = 'cerrar' }) {
+
+export default function BarcodeScannerModal({ visible, onScanned, onClose, allProducts = [], onAddProduct, scannerMode = 'cerrar', userRole }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [barcode, setBarcode] = useState('');
   const [foundProduct, setFoundProduct] = useState(null);
+  const [isAdding, setIsAdding] = useState(false); // Nuevo flag
+
+  // Reiniciar escáner automáticamente si no se encuentra producto (en cualquier modo)
+  useEffect(() => {
+    if (scanned && !foundProduct) {
+      const timeout = setTimeout(() => {
+        setScanned(false);
+        setBarcode('');
+        setFoundProduct(null);
+      }, 1200); // 1.2 segundos para que el usuario vea el mensaje
+      return () => clearTimeout(timeout);
+    }
+  }, [scanned, foundProduct]);
 
   const handleBarCodeScanned = async ({ type, data }) => {
     setScanned(true);
     setBarcode(data);
-    // Si no se pasan productos, se asume modo registro (almacenista)
-    const isRegistroNuevo = !allProducts || allProducts.length === 0;
 
-    if (isRegistroNuevo) {
-      // Modo almacenista: colocar código y cerrar modal automáticamente
-      if (onScanned) onScanned(data);
-      if (onClose) setTimeout(onClose, 250); // Pequeño delay para UX
+    // Flujo por rol
+    if (userRole === 3) { // Almacenista
+      if (onScanned) onScanned(data); // Pasa el código al input
+      if (onClose) setTimeout(onClose, 250); // Cierra modal
       return;
     }
-    // Modo cajero: buscar producto y seguir flujo normal
+
+    // Cajero (id 4)
     const product = allProducts.find(p => (p.code || p.barcode) === data);
     setFoundProduct(product || null);
     // Vibración y beep si existe producto
@@ -40,9 +53,7 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose, allPr
         });
       } catch {}
     }
-    // Siempre colocar el código en el input aunque no exista producto
-    if (onScanned) onScanned(data);
-    // Ya no se cierra el modal automáticamente
+    // En cajero, solo añadir al pulsar 'Añadir'.
   };
 
   useEffect(() => {
@@ -118,16 +129,23 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose, allPr
                     <Button
                       bg="#111"
                       onPress={async () => {
+                        setIsAdding(true);
                         if (onAddProduct && foundProduct) {
                           await onAddProduct(foundProduct);
                         }
-                        onScanned && onScanned(barcode);
+                        // Cajero: dos modos
                         if (scannerMode === 'continuar') {
                           setTimeout(() => {
                             setScanned(false);
                             setBarcode('');
                             setFoundProduct(null);
-                          }, 350); // Pequeño delay para feedback visual
+                            setIsAdding(false);
+                          }, 350);
+                        } else if (scannerMode === 'cerrar') {
+                          setIsAdding(false);
+                          if (onClose) onClose();
+                        } else {
+                          setIsAdding(false);
                         }
                       }}
                       style={{ borderRadius: 8, paddingHorizontal: 16 }}
@@ -141,13 +159,6 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose, allPr
               {scanned && !foundProduct && (
                 <Box alignItems="center" width={260}>
                   <Text style={{ color: 'red', marginBottom: 12 }}>Producto no encontrado</Text>
-                  <Button
-                    bg="#111"
-                    onPress={onClose}
-                    style={{ borderRadius: 8, marginTop: 8, paddingHorizontal: 16 }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 15 }}>Cerrar</Text>
-                  </Button>
                 </Box>
               )}
               {/* Botón Cerrar eliminado. El modal ahora se cierra al pulsar fuera de la tarjeta */}
