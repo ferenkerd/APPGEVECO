@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Box, VStack, HStack, Button, Text, Divider, Popover } from '@gluestack-ui/themed';
+import { Box, VStack, HStack, Button, Text, Divider } from '@gluestack-ui/themed';
 import { ScrollView, TextInput } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import Toast from 'react-native-toast-message';
@@ -18,7 +18,7 @@ export default function AdminCobroScreen() {
   // Si viene paymentType (del cajero), usarlo como valor inicial
   const [paymentMethod, setPaymentMethod] = useState(paymentType || '');
   const [loading, setLoading] = useState(false);
-  const [openPopoverIdx, setOpenPopoverIdx] = useState(null);
+  // const [openPopoverIdx, setOpenPopoverIdx] = useState(null); // Popover removed
   const [paymentMethodsError, setPaymentMethodsError] = useState(false);
   const [montoRecibido, setMontoRecibido] = useState('');
 
@@ -141,50 +141,15 @@ export default function AdminCobroScreen() {
               );
               return (
                 <HStack key={idx} justifyContent="space-between" alignItems="center">
-                  {/* Columna: Nombre del producto (con popover) */}
+                  {/* Columna: Nombre del producto (multilínea, sin popover) */}
                   <Box flex={2} maxWidth={180}>
-                    <Popover
-                      isOpen={openPopoverIdx === idx}
-                      onOpen={() => setOpenPopoverIdx(idx)}
-                      onClose={() => setOpenPopoverIdx(null)}
-                      closeOnBlur={true}
-                      closeOnEsc={true}
-                      trigger={triggerProps => (
-                        <Text
-                          {...triggerProps}
-                          style={{ maxWidth: 180 }}
-                          numberOfLines={1}
-                          ellipsizeMode="tail"
-                        >
-                          {productName}
-                        </Text>
-                      )}
+                    <Text
+                      style={{ maxWidth: 180 }}
+                      numberOfLines={3}
+                      ellipsizeMode="tail"
                     >
-                      <Popover.Content
-                        style={{
-                          backgroundColor: '#fff',
-                          borderWidth: 1,
-                          borderColor: '#111',
-                          maxWidth: 260,
-                        }}
-                      >
-                        <Popover.Arrow style={{ backgroundColor: '#fff' }} />
-                        <Popover.Body style={{ flexShrink: 1 }}>
-                          <ScrollView
-                            nestedScrollEnabled={true}
-                            contentContainerStyle={{ flexGrow: 1}}
-                            style={{ minHeight: 32, maxHeight: 140, maxWidth: 240 }}
-                          >
-                            <Text
-                              style={{ fontSize: 16, textAlign: 'center', flexWrap: 'wrap' }}
-                              onPress={() => setOpenPopoverIdx(null)}
-                            >
-                              {productName}
-                            </Text>
-                          </ScrollView>
-                        </Popover.Body>
-                      </Popover.Content>
-                    </Popover>
+                      {productName}
+                    </Text>
                   </Box>
                   {/* Columna: Cantidad */}
                   <Box flex={1} alignItems="center">
