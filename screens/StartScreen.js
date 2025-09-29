@@ -1,5 +1,6 @@
 
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { Box, Text, Image, VStack, Pressable } from '@gluestack-ui/themed';
 import { SafeAreaView } from 'react-native';
 import { Button, ButtonText } from '@gluestack-ui/themed';
@@ -15,6 +16,27 @@ const StartScreen = ({ navigation }) => {
   devLog('StartScreen mounted');
   const { colorMode, toggleColorMode } = useContext(ColorModeContext);
   const palette = getPalette(colorMode);
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    console.log('[StartScreen] loading:', loading, 'user:', user);
+    if (!loading && user && user.user) {
+      let dashboard = 'CajeroDashboard';
+      if (user.user.role === 'admin' || user.user.is_superuser) {
+        dashboard = 'AdministradorDashboard';
+      } else if (user.user.role === 'almacenista') {
+        dashboard = 'AlmacenistaDashboard';
+      }
+      console.log('[StartScreen] Redirigiendo a:', dashboard);
+      // Forzar la redirección después del render para evitar problemas de timing
+      setTimeout(() => {
+        navigation.reset({ index: 0, routes: [{ name: dashboard }] });
+      }, 0);
+    }
+  }, [user, loading, navigation]);
+
+  if (loading) return null;
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>
       <ExpoStatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />

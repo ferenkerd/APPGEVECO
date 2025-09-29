@@ -132,7 +132,7 @@ export default function HistorialOperacionesScreen() {
             const cajeroId = user?.user?.user_id || user?.user?.id || user?.user?.pk || user?.user?.username || user?.user?.email;
             console.log('CAJERO ID:', cajeroId);
             operaciones.forEach((op) => {
-              console.log('OP.user:', op.user);
+              console.log('OP.user:', op.user.user);
             });
           } catch (e) {}
         })()}
