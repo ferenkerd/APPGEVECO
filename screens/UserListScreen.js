@@ -69,6 +69,7 @@ export default function UserListScreen() {
           </VStack>
         </ScrollView>
       )}
+        <Box style={{ height: 48 }} />
     </Box>
   );
 }
