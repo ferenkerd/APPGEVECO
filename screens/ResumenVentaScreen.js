@@ -68,25 +68,10 @@ export default function ResumenVentaScreen({ navigation, route }) {
     try {
       await deliverSale(venta.id, user.access);
       Toast.show({ type: 'success', text1: 'Venta entregada', text2: 'La venta fue marcada como entregada.' });
-      // Si viene de pendientes, volver a la lista limpiando el stack
-      if (fromPendientesEntrega) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'CajeroDashboard' }],
-        });
-      } else {
-        // Al volver, pasar el método de pago igual que en admin
-        navigation.replace('ResumenVenta', {
-          venta: { ...venta, delivery_status: 'delivered' },
-          client,
-          products,
-          total,
-          paymentType: venta?.payment_method?.id || venta?.payment_method || venta?.payment?.payment_method?.id || venta?.payment?.payment_method || paymentType,
-          currency,
-          paymentMethods,
-          fromPendientesEntrega,
-        });
-      }
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'CajeroDashboard' }],
+      });
     } catch (e) {
       Toast.show({ type: 'error', text1: 'Error', text2: e.message || 'No se pudo marcar como entregada.' });
     }
