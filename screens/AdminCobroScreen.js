@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Box, VStack, HStack, Button, Text, Divider } from '@gluestack-ui/themed';
-import { ScrollView, TextInput } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { Box, VStack, HStack, Button, Text, Divider, Select, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator } from '@gluestack-ui/themed';
+import { ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getPaymentMethods, registerPayment, approveSale } from '../services/api';
@@ -17,6 +16,7 @@ export default function AdminCobroScreen() {
   const [paymentMethods, setPaymentMethods] = useState([]);
   // Si viene paymentType (del cajero), usarlo como valor inicial
   const [paymentMethod, setPaymentMethod] = useState(paymentType || '');
+  const [showPaymentSheet, setShowPaymentSheet] = useState(false);
   const [loading, setLoading] = useState(false);
   // const [openPopoverIdx, setOpenPopoverIdx] = useState(null); // Popover removed
   const [paymentMethodsError, setPaymentMethodsError] = useState(false);
@@ -179,24 +179,52 @@ export default function AdminCobroScreen() {
             <Text color="#222" fontWeight="bold" fontSize={18}>${total && total.toFixed ? total.toFixed(2) : Number(total).toFixed(2)}</Text>
           </HStack>
         </Box>
-        <Text fontWeight="bold" mb={8}>Método de pago</Text>
-        <Box mb={16} borderWidth={1} borderColor="#ccc" borderRadius={8} overflow="hidden">
-          {paymentMethods.length === 0 && !paymentMethodsError ? (
-            <Text color="#f00" fontWeight="bold" p={12} textAlign="center">
-              No hay métodos de pago disponibles. Contacte al administrador.
+        <Box mb={2}>
+          <Text color="#222" mb={1} style={{ fontWeight: 'bold' }}>Método de pago</Text>
+          <TouchableOpacity
+            style={{ width: '100%', borderRadius: 8, borderWidth: 1, borderColor: '#e5e5e5', backgroundColor: '#fff', height: 44, minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, paddingVertical: 0, marginBottom: 8 }}
+            onPress={() => setShowPaymentSheet(true)}
+            disabled={paymentMethods.length === 0}
+          >
+            <Text style={{ color: paymentMethod ? '#222' : '#888', fontSize: 16 }}>
+              {paymentMethod
+                ? (paymentMethods.find(pm => pm.id === paymentMethod)?.name || paymentMethod)
+                : 'Selecciona método de pago'}
             </Text>
-          ) : (
-            <Picker
-              selectedValue={paymentMethod}
-              onValueChange={setPaymentMethod}
-              enabled={paymentMethods.length > 0}
-            >
-              <Picker.Item label="Selecciona método de pago" value="" />
-              {(Array.isArray(paymentMethods) ? paymentMethods : []).map((pm) => (
-                <Picker.Item key={pm.id} label={pm.name} value={pm.id} />
-              ))}
-            </Picker>
-          )}
+          </TouchableOpacity>
+          {/* Bottom sheet tipo SelectPortal para seleccionar método de pago */}
+          <SelectPortal isOpen={showPaymentSheet} onClose={() => setShowPaymentSheet(false)}>
+            <SelectBackdrop onPress={() => setShowPaymentSheet(false)} />
+            <SelectContent style={{ backgroundColor: '#fff', borderRadius: 16, width: '100%', maxWidth: '100%', maxHeight: '80%', minHeight: '30%', paddingBottom: 24 }}>
+              <SelectDragIndicatorWrapper>
+                <SelectDragIndicator />
+              </SelectDragIndicatorWrapper>
+              <Box style={{ width: '100%', maxWidth: '100%', paddingBottom: 24 }}>
+                <Text fontWeight="bold" fontSize={18} mb={12}>Selecciona método de pago</Text>
+                {paymentMethods.length === 0 ? (
+                  <Text color="#f00" fontWeight="bold" p={12} textAlign="center">
+                    No hay métodos de pago disponibles. Contacte al administrador.
+                  </Text>
+                ) : (
+                  paymentMethods.map((pm) => (
+                    <TouchableOpacity
+                      key={pm.id}
+                      style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}
+                      onPress={() => {
+                        setPaymentMethod(pm.id);
+                        setShowPaymentSheet(false);
+                      }}
+                    >
+                      <Text style={{ fontSize: 16, color: '#222' }}>{pm.name}</Text>
+                    </TouchableOpacity>
+                  ))
+                )}
+                <Button mt={8} variant="outline" borderColor="#111" borderRadius={8} onPress={() => setShowPaymentSheet(false)}>
+                  <Text color="#111" fontWeight="bold">Cancelar</Text>
+                </Button>
+              </Box>
+            </SelectContent>
+          </SelectPortal>
         </Box>
         {paymentMethodsError && (
           <Button
@@ -215,26 +243,51 @@ export default function AdminCobroScreen() {
             <Text color="#f00" fontWeight="bold" fontSize={15} style={{ textAlign: 'center' }}>Reintentar cargar métodos de pago</Text>
           </Button>
         )}
-        <Box mb={2}>
-          <Text color={palette.text} mb={1}>Monto recibido:</Text>
-          <TextInput
-            value={montoRecibido}
-            onChangeText={setMontoRecibido}
-            placeholder="Monto recibido"
-            keyboardType="numeric"
-            style={{ width: '100%', padding: 8, borderRadius: 6, borderWidth: 1, borderColor: '#ccc', marginBottom: 8, color: palette.text }}
-          />
-        </Box>
-        <Box mb={2}>
-          <Text color={palette.text} mb={1}>Vueltos:</Text>
-          <TextInput
-            value={vuelto()}
-            editable={false}
-            placeholder="Vueltos"
-            keyboardType="numeric"
-            style={{ width: '100%', padding: 8, borderRadius: 6, borderWidth: 1, borderColor: '#ccc', marginBottom: 8, color: palette.text, backgroundColor: '#f5f5f5' }}
-          />
-        </Box>
+        {/* Campo para monto recibido y vueltos solo si efectivo */}
+        {(() => {
+          // Detectar si el método de pago es efectivo
+          const efectivoNames = ['efectivo', 'cash', 'contado'];
+          const pm = paymentMethods.find(pm => pm.id === paymentMethod || pm.name === paymentMethod);
+          const isEfectivo = pm && efectivoNames.some(name => (pm.name || '').toLowerCase().includes(name));
+          if (!isEfectivo) return null;
+          return (
+            <>
+              <Box mb={2}>
+                <Text color="#222" mb={1} style={{ fontWeight: 'bold' }}>Monto recibido</Text>
+                <TextInput
+                  value={montoRecibido}
+                  onChangeText={setMontoRecibido}
+                  placeholder="Monto recibido"
+                  keyboardType="numeric"
+                  style={{ width: '100%', borderRadius: 8, borderWidth: 1, borderColor: '#ccc', marginBottom: 8, color: '#222', height: 44, minHeight: 44, paddingHorizontal: 12, paddingVertical: 0 }}
+                />
+              </Box>
+              <Box mb={2}>
+                <Text mb={1} style={{ fontWeight: 'bold', color: '#222' }}>Vueltos</Text>
+                <TextInput
+                  value={
+                    Number.isNaN(Number(vuelto()))
+                      ? ''
+                      : (Number(montoRecibido) === Number(total) ? '0.00' : String(vuelto()))
+                  }
+                  editable={false}
+                  placeholder={
+                    Number(montoRecibido) < Number(total) && montoRecibido !== ''
+                      ? 'El monto recibido es menor al total'
+                      : 'Vueltos'
+                  }
+                  placeholderTextColor={
+                    Number(montoRecibido) < Number(total) && montoRecibido !== ''
+                      ? 'red'
+                      : '#888'
+                  }
+                  keyboardType="numeric"
+                  style={{ width: '100%', borderRadius: 8, borderWidth: 1, borderColor: '#ccc', marginBottom: 8, color: '#222', backgroundColor: '#f5f5f5', height: 44, minHeight: 44, paddingHorizontal: 12, paddingVertical: 0 }}
+                />
+              </Box>
+            </>
+          );
+        })()}
         <Button
           bg="#111"
           isDisabled={
