@@ -10,7 +10,8 @@ function formatDate(dateStr) {
 }
 import { Box, Text, VStack, HStack, Button, Divider, Input, InputField, Select, SelectItem, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator } from '@gluestack-ui/themed';
 import { useAuth } from '../context/AuthContext';
-import { getPrefixes } from '../services/api';
+import { getPrefixes, patchUser } from '../services/api';
+import Toast from 'react-native-toast-message';
 import { ScrollView } from 'react-native';
 import { getPalette } from '../styles/theme';
 import { ColorModeContext } from '../context/ColorModeContext';
@@ -186,7 +187,34 @@ export default function UserDetailScreen({ route, navigation }) {
           <Divider />
       </VStack>
       <HStack space="md" justifyContent="center" marginTop={48}>
-        <Button width="100%" size="lg" variant="solid" backgroundColor={palette.primary} onPress={() => {/* TODO: guardar cambios */}} style={{ marginBottom: 24 }}>
+        <Button width="100%" size="lg" variant="solid" backgroundColor={palette.primary} onPress={async () => {
+          const accessToken = authUser?.access;
+          const payload = {
+            username: form.username,
+            first_name: form.first_name,
+            last_name: form.last_name,
+            email: form.email,
+            is_active: form.is_active,
+            is_staff: form.is_staff,
+            is_superuser: form.is_superuser,
+            job_position: form.job_position_id || undefined,
+            profile: {
+              identity_card: form.identity_card,
+              last_name: form.last_name,
+              gender: form.gender,
+              prefix: form.prefix,
+              contact_phone: form.contact_phone,
+              address: form.address,
+            }
+          };
+          try {
+            await patchUser(user.id, payload, accessToken);
+            Toast.show({ type: 'success', text1: 'Usuario actualizado', position: 'top', visibilityTime: 2200 });
+            navigation.goBack();
+          } catch (e) {
+            Toast.show({ type: 'error', text1: 'Error al actualizar', text2: 'No se pudo actualizar el usuario.', position: 'top', visibilityTime: 3000 });
+          }
+        }} style={{ marginBottom: 24 }}>
           <Text color={palette.background} fontWeight="bold">Guardar cambios</Text>
         </Button>
       </HStack>

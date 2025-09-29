@@ -21,8 +21,8 @@ export async function updateUser(userData, accessToken) {
 }
 
 // Actualizar usuario parcialmente (PATCH: solo campos a modificar, requiere id)
-export async function patchUser(userData, accessToken) {
-  return apiFetch('usuarios/', {
+export async function patchUser(userId, userData, accessToken) {
+  return apiFetch(`usuarios/${userId}/`, {
     method: 'PATCH',
     body: JSON.stringify(userData)
   }, accessToken);
