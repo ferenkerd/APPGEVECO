@@ -6,7 +6,6 @@ import { Icon, SearchIcon } from '@gluestack-ui/themed';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useAuth } from '../context/AuthContext';
 import { listSalesByCajero, getSaleDetail } from '../services/api';
-import { useNavigation } from '@react-navigation/native';
 
 function formatDate(fecha) {
   if (!fecha) return '';
@@ -21,7 +20,6 @@ function formatDate(fecha) {
 }
 
 export default function HistorialOperacionesScreen() {
-  const navigation = useNavigation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const { user } = useAuth();
   const [operaciones, setOperaciones] = useState([]);
