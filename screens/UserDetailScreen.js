@@ -6,7 +6,7 @@ const jobPositions = [
 ];
 // Agrega más roles según tu backend
 
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 // Formatea una fecha ISO a DD/MM/YYYY HH:mm
 function formatDate(dateStr) {
   if (!dateStr) return '';

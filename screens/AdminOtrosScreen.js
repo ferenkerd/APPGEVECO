@@ -61,6 +61,8 @@ export default function AdminOtrosScreen({ navigation }) {
   const handleModulePress = (mod) => {
     if (mod.key === 'usuarios') {
       navigation.navigate('UserList');
+    } else if (mod.key === 'productos') {
+      navigation.navigate('ProductList');
     } else if (mod.key === 'tipo-cobro') {
       navigation.navigate('TipoCobro');
     } else {

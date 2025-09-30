@@ -1,3 +1,19 @@
+// Obtener lista de categorías
+export async function getCategories(accessToken) {
+  return apiFetch('categories/', { method: 'GET' }, accessToken);
+}
+// Editar producto (PATCH)
+export async function patchProduct(productId, productData, accessToken) {
+  return apiFetch(`products/${productId}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(productData)
+  }, accessToken);
+}
+// --- PRODUCTOS ---
+// Obtener lista de productos
+export async function getProducts(accessToken) {
+  return apiFetch('products/', { method: 'GET' }, accessToken);
+}
 // --- USUARIOS ---
 // Obtener lista de usuarios
 export async function getUsers(accessToken) {

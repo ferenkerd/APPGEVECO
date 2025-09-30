@@ -1,5 +1,3 @@
-  // Estado para modal de selección de método de pago (asegurar que existe)
-
 import React from 'react';
 import { Box, VStack, HStack, Button, Input, Text, Divider, Popover } from '@gluestack-ui/themed';
 import { ScrollView, TextInput, Modal, TouchableOpacity } from 'react-native';
@@ -40,6 +38,7 @@ export default function CheckoutScreen() {
   const [loading, setLoading] = React.useState(false);
   const [paymentMode, setPaymentMode] = React.useState('');
   const { user } = useAuth();
+
   const [showPaymentSheet, setShowPaymentSheet] = React.useState(false);
   const [receivedAmount, setReceivedAmount] = React.useState('');
 
@@ -302,8 +301,8 @@ export default function CheckoutScreen() {
           )}
           <Box height={48} bg="#fff" />
           {/* Botón de confirmar: lógica según modo de cobro y rol */}
-          {(((user?.user?.job_position === 4) && paymentMode === 'cashier') ||
-            ((user?.user?.job_position === 1 || user?.user?.job_position === 2) && paymentMode === 'admin')) && (
+          {(((user?.user?.job_position?.id === 4) && paymentMode === 'cashier') ||
+            ((user?.user?.job_position?.id === 1 || user?.user?.job_position?.id === 2) && paymentMode === 'admin')) && (
             <Button
               bg="#111"
               isDisabled={
@@ -319,7 +318,7 @@ export default function CheckoutScreen() {
             </Button>
           )}
           {/* Botón 'Enviar operación' solo para cajero y modo admin, sin más condiciones */}
-          {user?.user?.job_position === 4 && paymentMode === 'admin' && (
+          {user?.user?.job_position?.id === 4 && paymentMode === 'admin' && (
             <Button
               bg="#f7b731"
               borderRadius={8}
