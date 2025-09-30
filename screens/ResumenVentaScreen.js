@@ -22,8 +22,8 @@ export default function ResumenVentaScreen({ navigation, route }) {
   const [change, setChange] = useState(''); // Para input de vueltos
 
   // Determinar rol y estado
-  const isAdmin = user?.user?.job_position === 1 || user?.user?.job_position === 2;
-  const isCajero = user?.user?.job_position === 4;
+  const isAdmin = user?.user?.job_position?.id === 1 || user?.user?.job_position?.id === 2;
+  const isCajero = user?.user?.job_position?.id === 4;
   const ventaPendiente = venta?.status === 'pending';
   const ventaPagada = venta?.status === 'paid';
   const ventaEntregada = venta?.delivery_status === 'delivered';
