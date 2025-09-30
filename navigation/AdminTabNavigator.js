@@ -4,6 +4,7 @@ import CustomTabBar from '../components/CustomTabBar';
 import AdministradorDashboard from '../screens/AdministradorDashboard';
 import OrdenesPendientesScreen from '../screens/OrdenesPendientesScreen';
 import AdminOtrosScreen from '../screens/AdminOtrosScreen';
+import AddCurrencyScreen from '../screens/AddCurrencyScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -17,6 +18,7 @@ export default function AdminTabNavigator() {
       <Tab.Screen name="Dashboard" component={AdministradorDashboard} options={{ tabBarLabel: 'Inicio' }} />
       <Tab.Screen name="OrdenesPendientes" component={OrdenesPendientesScreen} options={{ tabBarLabel: 'Órdenes pendientes' }} />
       <Tab.Screen name="AdminOtros" component={AdminOtrosScreen} options={{ tabBarLabel: 'Otros' }} />
+        <Tab.Screen name="AddCurrency" component={AddCurrencyScreen} options={{ title: 'Añadir moneda' }} />
     </Tab.Navigator>
   );
 }

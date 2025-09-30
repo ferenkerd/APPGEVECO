@@ -1,3 +1,42 @@
+// --- MONEDAS Y DIVISAS ---
+// Obtener lista de monedas
+export async function getCurrencies(accessToken) {
+  return apiFetch('currencies/', { method: 'GET' }, accessToken);
+}
+// Crear nueva moneda
+export async function createCurrency(currencyData, accessToken) {
+  return apiFetch('currencies/', {
+    method: 'POST',
+    body: JSON.stringify(currencyData)
+  }, accessToken);
+}
+// Actualizar moneda (activar/desactivar)
+export async function patchCurrency(currencyId, data, accessToken) {
+  return apiFetch(`currencies/${currencyId}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data)
+  }, accessToken);
+}
+
+// --- TASAS DE CAMBIO ---
+// Obtener lista de tasas de cambio
+export async function getCurrencyRates(accessToken) {
+  return apiFetch('currency-rates/', { method: 'GET' }, accessToken);
+}
+// Crear nueva tasa de cambio
+export async function createCurrencyRate(rateData, accessToken) {
+  return apiFetch('currency-rates/', {
+    method: 'POST',
+    body: JSON.stringify(rateData)
+  }, accessToken);
+}
+// Actualizar tasa de cambio (activar/desactivar)
+export async function patchCurrencyRate(rateId, data, accessToken) {
+  return apiFetch(`currency-rates/${rateId}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data)
+  }, accessToken);
+}
 // Obtener lista de categorías
 export async function getCategories(accessToken) {
   return apiFetch('categories/', { method: 'GET' }, accessToken);

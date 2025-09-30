@@ -1,3 +1,5 @@
+import CurrencySettingsScreen from './screens/CurrencySettingsScreen';
+import CurrencyRatesScreen from './screens/CurrencyRatesScreen';
 import ProductDetailScreen from './screens/ProductDetailScreen';
 import UserListScreen from './screens/UserListScreen';
 import ProductListScreen from './screens/ProductListScreen';
@@ -114,6 +116,8 @@ function AppNavigator() {
   <Stack.Screen name="ProductList" component={ProductListScreen} options={{ title: 'Catálogo de productos', headerShown: true }} />
   <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'Detalle de usuario', headerShown: true }} />
   <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Editar producto', headerShown: true }} />
+  <Stack.Screen name="CurrencySettings" component={CurrencySettingsScreen} options={{ title: 'Configuración de Divisas', headerShown: true }} />
+  <Stack.Screen name="CurrencyRates" component={CurrencyRatesScreen} options={{ title: 'Gestión de tasas', headerShown: true }} />
     </Stack.Navigator>
   );
 }

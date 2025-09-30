@@ -33,14 +33,14 @@ const modules = [
     title: 'Divisas y moneda base',
     description: 'Administra los valores de referencia de las diferentes divisas y selecciona en qué moneda se reflejan los montos.',
     button: 'Configurar divisas',
-    icon: '💱',
+    icon: 'currency',
   },
   {
     key: 'tipo-cobro',
     title: 'Tipo de cobro',
     description: 'Define si el cobro es centralizado (solo admin puede cobrar) o descentralizado (el cajero puede cobrar).',
     button: 'Cambiar tipo de cobro',
-    icon: '🏦',
+    icon: 'bank',
   },
   {
     key: 'configuracion',
@@ -50,6 +50,16 @@ const modules = [
     icon: 'settings',
   },
 ];
+
+// Icon mapping for clarity and to avoid encoding issues
+const iconMap = {
+  person: '👤',
+  'bar-chart': '📊',
+  inventory: '📦',
+  settings: '⚙️',
+  currency: '💱',
+  bank: '🏦',
+};
 
 import TabHeader from '../components/TabHeader';
 
@@ -65,6 +75,8 @@ export default function AdminOtrosScreen({ navigation }) {
       navigation.navigate('ProductList');
     } else if (mod.key === 'tipo-cobro') {
       navigation.navigate('TipoCobro');
+    } else if (mod.key === 'divisas') {
+      navigation.navigate('CurrencySettings');
     } else {
       // Aquí puedes agregar navegación para otros módulos si lo deseas
     }
@@ -104,8 +116,10 @@ export default function AdminOtrosScreen({ navigation }) {
                     shadowRadius: 4,
                   }}
                 >
-                  {/* Icon placeholder, replace with real icon if needed */}
-                  <Text fontSize={24} color={palette.primary}>{mod.icon === 'person' ? '👤' : mod.icon === 'bar-chart' ? '📊' : mod.icon === 'inventory' ? '📦' : mod.icon === 'settings' ? '⚙️' : mod.icon === '�' ? '💱' : mod.icon === '🏦' ? '🏦' : '�🔗'}</Text>
+                  {/* Icon rendering using mapping to avoid encoding issues */}
+                  <Text fontSize={24} color={palette.primary}>
+                    {iconMap[mod.icon] || '🔗'}
+                  </Text>
                 </Box>
                 <Box flex={1}>
                   <Text fontSize={16} fontWeight="bold" color={palette.text}>{mod.title}</Text>
