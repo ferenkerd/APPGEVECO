@@ -1,3 +1,4 @@
+
 import React, { useContext } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import CustomTabBar from '../components/CustomTabBar';
@@ -7,6 +8,7 @@ import { ColorModeContext } from '../context/ColorModeContext';
 import { getPalette } from '../styles/theme';
 import { Box, Text, Button } from '@gluestack-ui/themed';
 import { useNavigation } from '@react-navigation/native';
+import ProductListScreen from './ProductListScreen';
 
 // Pantalla de inicio del almacenista, con identidad visual y botón destacado
 function AlmacenInicioScreen() {
@@ -43,16 +45,8 @@ function AlmacenInicioScreen() {
 }
 
 // Inventario con identidad visual
-function AlmacenInventarioScreen() {
-  const { colorMode } = useContext(ColorModeContext);
-  const palette = getPalette(colorMode);
-  return (
-    <Box flex={1} bg={palette.background} alignItems="center" justifyContent="center" px={4}>
-      <Text fontSize={22} fontWeight="bold" color={palette.text}>Inventario</Text>
-      {/* Aquí puedes agregar la lista de inventario o componentes reciclados */}
-    </Box>
-  );
-}
+// Reutiliza la pantalla de listado de productos del admin
+const AlmacenInventarioScreen = ProductListScreen;
 
 // Reportes con identidad visual
 function AlmacenReportesScreen() {
