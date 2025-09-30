@@ -1,3 +1,11 @@
+// Obtener el valor de USD BCV desde el backend
+export async function getUsdBcv() {
+    return apiFetch('dolar-bcv/', { method: 'GET' });
+}
+// Obtener el valor de USDT en bolívares desde el backend
+export async function getUsdtBinance() {
+  return apiFetch('usdt-binance/', { method: 'GET' });
+}
 // --- MONEDAS Y DIVISAS ---
 // Obtener lista de monedas
 export async function getCurrencies(accessToken) {
