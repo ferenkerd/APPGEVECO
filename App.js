@@ -1,3 +1,4 @@
+import RegisterUserScreen from './screens/RegisterUserScreen';
 import CurrencySettingsScreen from './screens/CurrencySettingsScreen';
 import CurrencyRatesScreen from './screens/CurrencyRatesScreen';
 import ProductDetailScreen from './screens/ProductDetailScreen';
@@ -113,6 +114,7 @@ function AppNavigator() {
   <Stack.Screen name="AdminCobro" component={AdminCobroScreen} options={{ title: 'Administrar Cobro', headerShown: true }} />
   <Stack.Screen name="AdminCobroScreen" component={AdminCobroScreen} options={{ title: 'Cobro de Orden', headerShown: true }} />
   <Stack.Screen name="UserList" component={UserListScreen} options={{ title: 'Usuarios', headerShown: true }} />
+  <Stack.Screen name="RegisterUser" component={RegisterUserScreen} options={{ title: 'Registrar usuario', headerShown: true }} />
   <Stack.Screen name="ProductList" component={ProductListScreen} options={{ title: 'Catálogo de productos', headerShown: true }} />
   <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: 'Detalle de usuario', headerShown: true }} />
   <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Editar producto', headerShown: true }} />

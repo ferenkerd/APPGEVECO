@@ -42,6 +42,17 @@ export default function UserListScreen() {
 
   return (
     <Box flex={1} bg={palette.surface}>
+      {/* Botón para ir a la pantalla de registro de usuario */}
+      <Box px={16} pt={16} pb={4}>
+        <Button
+          size="md"
+          backgroundColor={palette.primary}
+          borderRadius={12}
+          onPress={() => navigation.navigate('RegisterUser')}
+        >
+          <Text color="#fff" fontWeight="bold">Registrar nuevo usuario</Text>
+        </Button>
+      </Box>
       {loading ? (
         <Spinner size="large" mt={24} />
       ) : error ? (
