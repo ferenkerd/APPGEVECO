@@ -20,6 +20,8 @@ const RegistrarProductoScreen = ({ navigation }) => {
   const [salePrice, setSalePrice] = useState('');
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState([]);
+  const [stockQuantity, setStockQuantity] = useState('');
+  const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [formError, setFormError] = useState('');
@@ -38,7 +40,7 @@ const RegistrarProductoScreen = ({ navigation }) => {
 
   const handleRegister = async () => {
     setFormError('');
-    if (!code || !name || !purchasePrice || !salePrice || !category) {
+    if (!code || !name || !purchasePrice || !salePrice || !category || stockQuantity === '') {
       setFormError('Completa todos los campos.');
       return;
     }
@@ -50,13 +52,15 @@ const RegistrarProductoScreen = ({ navigation }) => {
         purchase_price: purchasePrice,
         sale_price: salePrice,
         category,
+        stock_quantity: stockQuantity,
+        is_active: isActive,
       };
-      await apiFetch('/products/register/', {
+      await apiFetch('products/', {
         method: 'POST',
         body: JSON.stringify(payload),
       }, user?.access);
       Toast.show({ type: 'success', text1: 'Producto registrado' });
-      setCode(''); setName(''); setPurchasePrice(''); setSalePrice(''); setCategory('');
+      setCode(''); setName(''); setPurchasePrice(''); setSalePrice(''); setCategory(''); setStockQuantity(''); setIsActive(true);
     } catch (e) {
       setFormError('No se pudo registrar el producto.');
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo registrar el producto' });
@@ -103,12 +107,37 @@ const RegistrarProductoScreen = ({ navigation }) => {
               style={{ width: '100%' }}
             />
           </Box>
+          <Box width="100%" mb={2} flexDirection="row" alignItems="center">
+            <Text color="#666" fontSize={15} mb={2} ml={1} mr={2}>Activo</Text>
+            <Button
+              variant="solid"
+              size="sm"
+              bg={isActive ? '#22c55e' : '#ef4444'}
+              borderColor={isActive ? '#22c55e' : '#ef4444'}
+              onPress={() => setIsActive(!isActive)}
+              style={{ minWidth: 60 }}
+            >
+              <Text color="#fff" fontWeight="bold">{isActive ? 'Sí' : 'No'}</Text>
+            </Button>
+          </Box>
           <Box width="100%" mb={2}>
             <Text color="#666" fontSize={15} mb={2} ml={1}>Precio de compra</Text>
             <FormInput
               placeholder="Ej: 10.00"
               value={purchasePrice}
               onChangeText={setPurchasePrice}
+              keyboardType="numeric"
+              backgroundColor="#f5f5f5"
+              textColor="#111"
+              style={{ width: '100%' }}
+            />
+          </Box>
+          <Box width="100%" mb={2}>
+            <Text color="#666" fontSize={15} mb={2} ml={1}>Cantidad en stock</Text>
+            <FormInput
+              placeholder="Ej: 100"
+              value={stockQuantity}
+              onChangeText={setStockQuantity}
               keyboardType="numeric"
               backgroundColor="#f5f5f5"
               textColor="#111"
@@ -133,9 +162,12 @@ const RegistrarProductoScreen = ({ navigation }) => {
               selectedValue={category}
               onValueChange={setCategory}
             >
-        <SelectTrigger variant="outline" size="md">
-          <SelectInput placeholder="Selecciona una categoría" />
-          <SelectIcon as={MaterialIcons} name="arrow-drop-down" />
+              <SelectTrigger variant="outline" size="md">
+                <SelectInput placeholder="Selecciona una categoría" value={(() => {
+                  const cat = categories.find(c => String(c.id) === String(category));
+                  return cat ? cat.name : '';
+                })()} />
+                <SelectIcon as={MaterialIcons} name="arrow-drop-down" />
               </SelectTrigger>
               <SelectPortal>
                 <SelectBackdrop />

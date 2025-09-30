@@ -27,20 +27,17 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose, allPr
   }, [scanned, foundProduct]);
 
   const handleBarCodeScanned = async ({ type, data }) => {
-    setScanned(true);
-    setBarcode(data);
-
-    // Flujo por rol
-    if (userRole === 3) { // Almacenista
-      if (onScanned) onScanned(data); // Pasa el código al input
-      if (onClose) setTimeout(onClose, 250); // Cierra modal
+    // Si es almacenista o no se pasa userRole (registro de producto), solo pasar el código y cerrar
+    if (!userRole || userRole === 3) {
+      if (onScanned) onScanned(data);
+      if (onClose) setTimeout(onClose, 250);
       return;
     }
-
-    // Cajero (id 4)
+    // Cajero (userRole === 4): buscar producto y mostrar resultado
+    setScanned(true);
+    setBarcode(data);
     const product = allProducts.find(p => (p.code || p.barcode) === data);
     setFoundProduct(product || null);
-    // Vibración y beep si existe producto
     if (product) {
       try { await Haptics.selectionAsync(); } catch {}
       try {
@@ -156,7 +153,8 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose, allPr
 
                 </Box>
               )}
-              {scanned && !foundProduct && (
+              {/* Solo mostrar mensaje de producto no encontrado si NO es almacenista */}
+              {scanned && !foundProduct && userRole !== 3 && (
                 <Box alignItems="center" width={260}>
                   <Text style={{ color: 'red', marginBottom: 12 }}>Producto no encontrado</Text>
                 </Box>
