@@ -7,6 +7,7 @@ import TabHeader from '../components/TabHeader';
 import { ColorModeContext } from '../context/ColorModeContext';
 import { getPalette } from '../styles/theme';
 import { Box, Text, Button } from '@gluestack-ui/themed';
+import StockAlertScreen from './StockAlertScreen';
 import { useNavigation } from '@react-navigation/native';
 import ProductListScreen from './ProductListScreen';
 
@@ -49,16 +50,8 @@ function AlmacenInicioScreen() {
 const AlmacenInventarioScreen = ProductListScreen;
 
 // Reportes con identidad visual
-function AlmacenReportesScreen() {
-  const { colorMode } = useContext(ColorModeContext);
-  const palette = getPalette(colorMode);
-  return (
-    <Box flex={1} bg={palette.background} alignItems="center" justifyContent="center" px={4}>
-      <Text fontSize={22} fontWeight="bold" color={palette.text}>Reportes</Text>
-      {/* Aquí puedes agregar componentes de reportes reciclados */}
-    </Box>
-  );
-}
+// Alertas de stock bajo
+const AlmacenReportesScreen = StockAlertScreen;
 
 const Tab = createBottomTabNavigator();
 
