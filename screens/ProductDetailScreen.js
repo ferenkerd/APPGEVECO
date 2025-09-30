@@ -18,6 +18,7 @@ export default function ProductDetailScreen({ route, navigation }) {
     sale_price: product.sale_price || '',
     stock_quantity: product.stock_quantity || '',
     purchase_price: product.purchase_price || '',
+    is_active: typeof product.is_active === 'boolean' ? product.is_active : true,
   });
   const [categories, setCategories] = useState([]);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
@@ -35,7 +36,17 @@ export default function ProductDetailScreen({ route, navigation }) {
   const handleSave = async () => {
     setLoading(true);
     try {
-      await patchProduct(product.id, form);
+      // Solo enviar los campos relevantes, incluyendo is_active
+      const payload = {
+        name: form.name,
+        code: form.code,
+        category: form.category,
+        sale_price: form.sale_price,
+        stock_quantity: form.stock_quantity,
+        purchase_price: form.purchase_price,
+        is_active: form.is_active,
+      };
+      await patchProduct(product.id, payload);
       Toast.show({ type: 'success', text1: 'Producto actualizado', position: 'top', visibilityTime: 2200 });
       navigation.navigate('ProductList', { refresh: true });
     } catch (e) {
@@ -55,6 +66,21 @@ export default function ProductDetailScreen({ route, navigation }) {
             <Input variant="outline" mb={2}>
               <InputField value={form.name} placeholder="Nombre" onChangeText={v => handleChange('name', v)} />
             </Input>
+
+            <HStack alignItems="center" space="md" mb={2}>
+              <Text fontWeight="bold" color={palette.text}>Activo</Text>
+              <Button
+                variant="solid"
+                size="sm"
+                backgroundColor={form.is_active ? '#22c55e' : '#ef4444'}
+                borderColor={form.is_active ? '#22c55e' : '#ef4444'}
+                onPress={() => handleChange('is_active', !form.is_active)}
+              >
+                <Text color={palette.background} fontWeight="bold">
+                  {form.is_active ? 'Sí' : 'No'}
+                </Text>
+              </Button>
+            </HStack>
             <Text fontWeight="bold" color={palette.text} mb={-2}>Código</Text>
             <Input variant="outline" mb={2}>
               <InputField value={form.code} placeholder="Código" onChangeText={v => handleChange('code', v)} />

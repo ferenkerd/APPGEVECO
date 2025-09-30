@@ -222,8 +222,10 @@ export default function AgregarProductosScreen({ navigation, route }) {
     const fetchProducts = async () => {
       try {
         const response = await apiFetch('/products/', { method: 'GET' }, user?.access);
-        setAllProducts(response);
-        setFilteredProducts(response);
+  // Filtrar solo productos activos
+  const activos = Array.isArray(response) ? response.filter(p => p.is_active !== false) : [];
+  setAllProducts(activos);
+  setFilteredProducts(activos);
       } catch (e) {
         setAllProducts([]);
         setFilteredProducts([]);
@@ -239,6 +241,7 @@ export default function AgregarProductosScreen({ navigation, route }) {
     } else {
       setFilteredProducts(
         allProducts.filter(p => {
+          if (p.is_active === false) return false;
           const query = productQuery.toLowerCase();
           const barcode = (p.barcode || p.code || '').toLowerCase();
           const name = (p.name || '').toLowerCase();
