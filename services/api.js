@@ -227,8 +227,25 @@ export async function apiFetch(endpoint, options = {}, token = null) {
   }
 
   if (!response.ok) {
-    const errorText = await response.text();
+    let errorText = await response.text();
     devLog('apiFetch: error', errorText);
+    // Si es 400 y el error es JSON, propagar el mensaje del backend
+    if (response.status === 400) {
+      try {
+        const errJson = JSON.parse(errorText);
+        // Si el error es un objeto con stock_quantity, devolver ese mensaje
+        if (errJson && typeof errJson === 'object') {
+          if (errJson.stock_quantity) {
+            throw new Error(errJson.stock_quantity);
+          }
+          // Si hay otros campos, concatenar los mensajes
+          const allMsgs = Object.values(errJson).filter(Boolean).join(' ');
+          if (allMsgs) throw new Error(allMsgs);
+        }
+      } catch (err) {
+        // Si no es JSON, continuar
+      }
+    }
     throw new Error('Error en la petición a la API');
   }
   const data = await response.json();

@@ -117,7 +117,13 @@ export default function CheckoutScreen() {
         });
       }
     } catch (e) {
-      Toast.show({ type: 'error', text1: 'Error', text2: e.message || 'No se pudo registrar la operación.' });
+      let msg = e.message || 'No se pudo registrar la operación.';
+      // Si el mensaje es exactamente el de stock_quantity, mostrarlo como informativo
+      if (msg.startsWith('No hay suficiente stock para el producto')) {
+        Toast.show({ type: 'info', text1: 'Stock insuficiente', text2: msg });
+      } else {
+        Toast.show({ type: 'error', text1: 'Error', text2: msg });
+      }
     }
     setLoading(false);
   };
